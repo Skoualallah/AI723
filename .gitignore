@@ -1,0 +1,29 @@
+# Configuration files (contains API keys)
+config.json
+
+# PDF knowledge base data
+pdf_knowledge_base.json
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
