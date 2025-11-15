@@ -3,6 +3,8 @@ from tkinter import filedialog, messagebox
 import json
 import os
 from datetime import datetime
+import threading
+from queue import Queue
 from pdf_handler import PDFHandler
 from openrouter_client import OpenRouterClient
 from rag_handler import RAGHandler
@@ -55,15 +57,12 @@ class AILMApp:
 
     def load_config(self):
         """Load configuration from file"""
-        if os.path.exists(self.config_file):
-            try:
-                with open(self.config_file, 'r') as f:
-                    return json.load(f)
-            except:
-                pass
-        return {
+        default_config = {
             "api_key": "",
-            "model": "anthropic/claude-3.5-sonnet",
+            "models": [
+                {"name": "anthropic/claude-3.5-sonnet", "enabled": True},
+                {"name": "openai/gpt-4-turbo", "enabled": False}
+            ],
             "use_rag": False,
             "rag_chunk_size": 500,
             "rag_chunk_overlap": 50,
@@ -71,10 +70,73 @@ class AILMApp:
             "use_structured_output": False
         }
 
+        if os.path.exists(self.config_file):
+            try:
+                with open(self.config_file, 'r') as f:
+                    config = json.load(f)
+
+                    # Backward compatibility: migrate old "model" field to "models" list
+                    if "model" in config and "models" not in config:
+                        old_model = config.pop("model")
+                        config["models"] = [{"name": old_model, "enabled": True}]
+
+                    # Ensure models field exists
+                    if "models" not in config:
+                        config["models"] = default_config["models"]
+
+                    return config
+            except:
+                pass
+
+        return default_config
+
     def save_config(self):
         """Save configuration to file"""
         with open(self.config_file, 'w') as f:
             json.dump(self.config, f, indent=2)
+
+    def get_enabled_models(self):
+        """Get list of enabled model names"""
+        return [model["name"] for model in self.config.get("models", []) if model.get("enabled", False)]
+
+    def add_model(self, model_name, enabled=True):
+        """Add a new model to the list"""
+        if "models" not in self.config:
+            self.config["models"] = []
+
+        # Check if model already exists
+        for model in self.config["models"]:
+            if model["name"] == model_name:
+                return False  # Model already exists
+
+        self.config["models"].append({"name": model_name, "enabled": enabled})
+        self.save_config()
+        return True
+
+    def remove_model(self, model_name):
+        """Remove a model from the list"""
+        if "models" not in self.config:
+            return False
+
+        original_length = len(self.config["models"])
+        self.config["models"] = [m for m in self.config["models"] if m["name"] != model_name]
+
+        if len(self.config["models"]) < original_length:
+            self.save_config()
+            return True
+        return False
+
+    def toggle_model(self, model_name):
+        """Toggle a model's enabled status"""
+        if "models" not in self.config:
+            return False
+
+        for model in self.config["models"]:
+            if model["name"] == model_name:
+                model["enabled"] = not model.get("enabled", False)
+                self.save_config()
+                return True
+        return False
 
     def load_pdf_knowledge(self):
         """Load PDF knowledge base from file"""
@@ -406,8 +468,9 @@ class AILMApp:
             width=400
         )
         self.model_entry.pack(pady=5)
-        if self.config.get("model"):
-            self.model_entry.insert(0, self.config["model"])
+        # Get first model from models list for backward compatibility
+        if self.config.get("models") and len(self.config["models"]) > 0:
+            self.model_entry.insert(0, self.config["models"][0]["name"])
 
         # Info label
         info_label = ctk.CTkLabel(
@@ -513,10 +576,22 @@ class AILMApp:
 
         # Send to OpenRouter
         try:
+            # Get first enabled model (for now - will be updated in Step 4)
+            enabled_models = self.get_enabled_models()
+            if not enabled_models:
+                messagebox.showerror(
+                    "Erreur",
+                    "Aucun modèle activé. Veuillez activer au moins un modèle dans Configuration."
+                )
+                self.send_button.configure(state="normal", text="Envoyer")
+                return
+
+            model = enabled_models[0]
+
             result = self.openrouter_client.send_message(
                 message,
                 self.config["api_key"],
-                self.config["model"],
+                model,
                 context,
                 self.chat_history,
                 use_structured_output=self.config.get("use_structured_output", False)
@@ -1120,7 +1195,13 @@ class AILMApp:
             return
 
         self.config["api_key"] = api_key
-        self.config["model"] = model
+
+        # Update models list - replace first model or create new list
+        if "models" not in self.config or not self.config["models"]:
+            self.config["models"] = [{"name": model, "enabled": True}]
+        else:
+            # Update the first model in the list
+            self.config["models"][0] = {"name": model, "enabled": True}
 
         self.save_config()
 
