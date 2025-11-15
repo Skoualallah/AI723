@@ -449,7 +449,8 @@ class AILMApp:
             text="Format de réponse JSON:\n"
                  '{\n'
                  '  "explanation": "Explication détaillée",\n'
-                 '  "final_answer": "Réponse finale"\n'
+                 '  "final_answer": "Réponse finale",\n'
+                 '  "final_answer_letter": "Lettre de la réponse (ex: A, B, C, D)"\n'
                  '}\n\n'
                  "Compatible avec: OpenAI GPT-4, GPT-4 Turbo, GPT-3.5 Turbo",
             font=("Arial", 10),
@@ -564,6 +565,7 @@ class AILMApp:
         """Format a structured JSON response for display"""
         explanation = parsed_json.get("explanation", "")
         final_answer = parsed_json.get("final_answer", "")
+        final_answer_letter = parsed_json.get("final_answer_letter", "")
 
         formatted = ""
         if explanation:
@@ -572,7 +574,11 @@ class AILMApp:
 
         if final_answer:
             formatted += "✅ Réponse finale:\n"
-            formatted += f"{final_answer}"
+            formatted += f"{final_answer}\n\n"
+
+        if final_answer_letter:
+            formatted += "🔤 Lettre de la réponse:\n"
+            formatted += f"{final_answer_letter}"
 
         return formatted if formatted else json.dumps(parsed_json, indent=2, ensure_ascii=False)
 
@@ -1089,7 +1095,8 @@ class AILMApp:
                 "Structured Output Activé",
                 "Les réponses du LLM seront structurées en JSON avec:\n\n"
                 "• explanation: Explication détaillée\n"
-                "• final_answer: Réponse finale\n\n"
+                "• final_answer: Réponse finale\n"
+                "• final_answer_letter: Lettre de la réponse (A, B, C, D...)\n\n"
                 "Note: Cette fonctionnalité nécessite un modèle compatible\n"
                 "(OpenAI GPT-4, GPT-4 Turbo, GPT-3.5 Turbo)"
             )

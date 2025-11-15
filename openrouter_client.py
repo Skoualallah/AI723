@@ -161,9 +161,13 @@ class OpenRouterClient:
                             "final_answer": {
                                 "type": "string",
                                 "description": "The final answer to the question"
+                            },
+                            "final_answer_letter": {
+                                "type": "string",
+                                "description": "The letter of the final answer (e.g., A, B, C, D)"
                             }
                         },
-                        "required": ["explanation", "final_answer"],
+                        "required": ["explanation", "final_answer", "final_answer_letter"],
                         "additionalProperties": False
                     }
                 }
