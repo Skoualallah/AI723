@@ -108,6 +108,17 @@ class AILMApp:
         )
         self.context_percentage.pack(side="left", padx=5, pady=5)
 
+        # View context button
+        self.view_context_button = ctk.CTkButton(
+            context_frame,
+            text="Voir Contexte",
+            command=self.show_context_window,
+            width=120,
+            height=30,
+            fg_color="#2B5278"
+        )
+        self.view_context_button.pack(side="right", padx=10, pady=5)
+
         # Chat display area
         self.chat_display = ctk.CTkTextbox(
             self.tab_chat,
@@ -416,6 +427,95 @@ class AILMApp:
             color = "red"
 
         self.context_percentage.configure(text_color=color)
+
+    def show_context_window(self):
+        """Show a window with the complete context that will be sent to the LLM"""
+        # Create toplevel window
+        context_window = ctk.CTkToplevel(self.root)
+        context_window.title("Contexte Complet du LLM")
+        context_window.geometry("800x600")
+
+        # Title
+        title_label = ctk.CTkLabel(
+            context_window,
+            text="Contexte qui sera envoyé au LLM",
+            font=("Arial", 16, "bold")
+        )
+        title_label.pack(pady=10)
+
+        # Info label
+        info_label = ctk.CTkLabel(
+            context_window,
+            text="Ceci est une prévisualisation du contexte complet (PDFs + historique de chat)",
+            font=("Arial", 11),
+            text_color="gray"
+        )
+        info_label.pack(pady=(0, 10))
+
+        # Build complete context
+        complete_context = self.build_complete_context()
+
+        # Text display
+        context_display = ctk.CTkTextbox(
+            context_window,
+            wrap="word",
+            font=("Courier", 11)
+        )
+        context_display.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+        # Insert context
+        context_display.insert("1.0", complete_context)
+        context_display.configure(state="disabled")
+
+        # Close button
+        close_button = ctk.CTkButton(
+            context_window,
+            text="Fermer",
+            command=context_window.destroy,
+            width=120,
+            height=35
+        )
+        close_button.pack(pady=10)
+
+        # Focus on the window
+        context_window.focus()
+
+    def build_complete_context(self):
+        """Build the complete context that will be sent to the LLM"""
+        context_parts = []
+
+        # PDF Knowledge Base
+        pdf_context = self.build_context()
+        if pdf_context:
+            context_parts.append("=" * 80)
+            context_parts.append("CONTEXTE DES PDFs")
+            context_parts.append("=" * 80)
+            context_parts.append(pdf_context)
+            context_parts.append("")
+
+        # Chat History
+        if self.chat_history:
+            context_parts.append("=" * 80)
+            context_parts.append("HISTORIQUE DE CONVERSATION")
+            context_parts.append("=" * 80)
+            context_parts.append("")
+
+            for i, msg in enumerate(self.chat_history[-10:], 1):
+                role = msg.get("role", "unknown").upper()
+                content = msg.get("content", "")
+                context_parts.append(f"--- Message {i} ({role}) ---")
+                context_parts.append(content)
+                context_parts.append("")
+
+        # If no context at all
+        if not context_parts:
+            context_parts.append("Aucun contexte disponible pour le moment.")
+            context_parts.append("")
+            context_parts.append("Le contexte sera créé après:")
+            context_parts.append("• Avoir ajouté des PDFs dans l'onglet 'Base de Connaissances PDF'")
+            context_parts.append("• Avoir envoyé des messages dans le chat")
+
+        return "\n".join(context_parts)
 
     def upload_pdf(self):
         """Upload and process a PDF file"""
