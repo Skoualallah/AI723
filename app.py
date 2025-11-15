@@ -64,7 +64,10 @@ class AILMApp:
         return {
             "api_key": "",
             "model": "anthropic/claude-3.5-sonnet",
-            "use_rag": False
+            "use_rag": False,
+            "rag_chunk_size": 500,
+            "rag_chunk_overlap": 50,
+            "rag_top_k": 5
         }
 
     def save_config(self):
@@ -230,6 +233,100 @@ class AILMApp:
             text_color="gray"
         )
         rag_desc.pack(pady=(0, 10))
+
+        # RAG Parameters frame
+        rag_params_frame = ctk.CTkFrame(self.tab_pdf)
+        rag_params_frame.pack(fill="x", padx=20, pady=10)
+
+        # Title for parameters
+        params_title = ctk.CTkLabel(
+            rag_params_frame,
+            text="Paramètres RAG",
+            font=("Arial", 12, "bold")
+        )
+        params_title.grid(row=0, column=0, columnspan=3, pady=(10, 15), padx=10, sticky="w")
+
+        # Chunk Size
+        chunk_size_label = ctk.CTkLabel(
+            rag_params_frame,
+            text="Taille des chunks (mots):",
+            font=("Arial", 11)
+        )
+        chunk_size_label.grid(row=1, column=0, padx=10, pady=5, sticky="w")
+
+        self.chunk_size_entry = ctk.CTkEntry(
+            rag_params_frame,
+            width=80,
+            placeholder_text="500"
+        )
+        self.chunk_size_entry.insert(0, str(self.config.get("rag_chunk_size", 500)))
+        self.chunk_size_entry.grid(row=1, column=1, padx=5, pady=5)
+
+        chunk_size_info = ctk.CTkLabel(
+            rag_params_frame,
+            text="Nombre de mots par segment (défaut: 500)",
+            font=("Arial", 9),
+            text_color="gray"
+        )
+        chunk_size_info.grid(row=1, column=2, padx=10, pady=5, sticky="w")
+
+        # Chunk Overlap
+        overlap_label = ctk.CTkLabel(
+            rag_params_frame,
+            text="Chevauchement (mots):",
+            font=("Arial", 11)
+        )
+        overlap_label.grid(row=2, column=0, padx=10, pady=5, sticky="w")
+
+        self.chunk_overlap_entry = ctk.CTkEntry(
+            rag_params_frame,
+            width=80,
+            placeholder_text="50"
+        )
+        self.chunk_overlap_entry.insert(0, str(self.config.get("rag_chunk_overlap", 50)))
+        self.chunk_overlap_entry.grid(row=2, column=1, padx=5, pady=5)
+
+        overlap_info = ctk.CTkLabel(
+            rag_params_frame,
+            text="Mots en commun entre chunks (défaut: 50)",
+            font=("Arial", 9),
+            text_color="gray"
+        )
+        overlap_info.grid(row=2, column=2, padx=10, pady=5, sticky="w")
+
+        # Top K
+        topk_label = ctk.CTkLabel(
+            rag_params_frame,
+            text="Nombre de résultats:",
+            font=("Arial", 11)
+        )
+        topk_label.grid(row=3, column=0, padx=10, pady=5, sticky="w")
+
+        self.topk_entry = ctk.CTkEntry(
+            rag_params_frame,
+            width=80,
+            placeholder_text="5"
+        )
+        self.topk_entry.insert(0, str(self.config.get("rag_top_k", 5)))
+        self.topk_entry.grid(row=3, column=1, padx=5, pady=5)
+
+        topk_info = ctk.CTkLabel(
+            rag_params_frame,
+            text="Chunks les plus pertinents à retourner (défaut: 5)",
+            font=("Arial", 9),
+            text_color="gray"
+        )
+        topk_info.grid(row=3, column=2, padx=10, pady=5, sticky="w")
+
+        # Save RAG parameters button
+        save_rag_params_btn = ctk.CTkButton(
+            rag_params_frame,
+            text="Sauvegarder les paramètres",
+            command=self.save_rag_parameters,
+            width=200,
+            height=30
+        )
+        save_rag_params_btn.grid(row=4, column=0, columnspan=3, pady=(15, 10), padx=10)
 
         # Upload button
         upload_btn = ctk.CTkButton(
@@ -412,7 +509,8 @@ class AILMApp:
         """Build context from PDF knowledge base"""
         # If RAG is enabled and we have a query, use RAG
         if self.config.get("use_rag", False) and query:
-            return self.rag_handler.build_rag_context(query, top_k=5)
+            top_k = self.config.get("rag_top_k", 5)
+            return self.rag_handler.build_rag_context(query, top_k=top_k)
 
         # Otherwise, use traditional full context
         if not self.pdf_knowledge:
@@ -679,6 +777,63 @@ class AILMApp:
         else:
             self.rag_info_label.configure(text="(Aucun chunk indexé)")
 
+    def save_rag_parameters(self):
+        """Save RAG parameters"""
+        try:
+            # Get and validate chunk size
+            chunk_size = int(self.chunk_size_entry.get())
+            if chunk_size < 50 or chunk_size > 2000:
+                messagebox.showerror(
+                    "Erreur",
+                    "La taille des chunks doit être entre 50 et 2000 mots"
+                )
+                return
+
+            # Get and validate chunk overlap
+            chunk_overlap = int(self.chunk_overlap_entry.get())
+            if chunk_overlap < 0 or chunk_overlap >= chunk_size:
+                messagebox.showerror(
+                    "Erreur",
+                    "Le chevauchement doit être entre 0 et la taille des chunks"
+                )
+                return
+
+            # Get and validate top k
+            top_k = int(self.topk_entry.get())
+            if top_k < 1 or top_k > 20:
+                messagebox.showerror(
+                    "Erreur",
+                    "Le nombre de résultats doit être entre 1 et 20"
+                )
+                return
+
+            # Save to config
+            self.config["rag_chunk_size"] = chunk_size
+            self.config["rag_chunk_overlap"] = chunk_overlap
+            self.config["rag_top_k"] = top_k
+            self.save_config()
+
+            # Ask if user wants to reindex
+            if self.config.get("use_rag", False) and self.pdf_knowledge:
+                if messagebox.askyesno(
+                    "Réindexation",
+                    "Les paramètres ont été sauvegardés.\n\n"
+                    "Voulez-vous réindexer les PDFs avec les nouveaux paramètres?\n"
+                    "(Recommandé si vous avez modifié la taille des chunks ou le chevauchement)"
+                ):
+                    self.reindex_pdfs_for_rag()
+            else:
+                messagebox.showinfo(
+                    "Succès",
+                    "Les paramètres RAG ont été sauvegardés!"
+                )
+
+        except ValueError:
+            messagebox.showerror(
+                "Erreur",
+                "Veuillez entrer des valeurs numériques valides"
+            )
+
     def reindex_pdfs_for_rag(self):
         """Reindex all existing PDFs for RAG"""
         if not self.pdf_knowledge:
@@ -687,12 +842,18 @@ class AILMApp:
         # Clear existing RAG data
         self.rag_handler.clear_all()
 
+        # Get RAG parameters
+        chunk_size = self.config.get("rag_chunk_size", 500)
+        chunk_overlap = self.config.get("rag_chunk_overlap", 50)
+
         # Process each PDF
         for pdf in self.pdf_knowledge:
             try:
                 chunks_count = self.rag_handler.process_pdf(
                     pdf['filename'],
-                    pdf['content']
+                    pdf['content'],
+                    chunk_size=chunk_size,
+                    overlap=chunk_overlap
                 )
                 print(f"Indexed {pdf['filename']}: {chunks_count} chunks")
             except Exception as e:
@@ -755,7 +916,14 @@ class AILMApp:
             # Process for RAG if enabled
             if self.config.get("use_rag", False):
                 try:
-                    chunks_count = self.rag_handler.process_pdf(filename, text)
+                    chunk_size = self.config.get("rag_chunk_size", 500)
+                    chunk_overlap = self.config.get("rag_chunk_overlap", 50)
+                    chunks_count = self.rag_handler.process_pdf(
+                        filename,
+                        text,
+                        chunk_size=chunk_size,
+                        overlap=chunk_overlap
+                    )
                     self.rag_handler.save_embeddings()
                     self.update_rag_info()
                     messagebox.showinfo(

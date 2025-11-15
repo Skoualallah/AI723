@@ -42,13 +42,15 @@ class RAGHandler:
 
         return chunks
 
-    def process_pdf(self, filename, content):
+    def process_pdf(self, filename, content, chunk_size=500, overlap=50):
         """
         Process a PDF by creating chunks and embeddings
 
         Args:
             filename: PDF filename
             content: Extracted text content from PDF
+            chunk_size: Number of words per chunk
+            overlap: Number of words to overlap between chunks
 
         Returns:
             Number of chunks created
@@ -56,7 +58,7 @@ class RAGHandler:
         model = self.load_model()
 
         # Split into chunks
-        chunks = self.chunk_text(content)
+        chunks = self.chunk_text(content, chunk_size, overlap)
 
         # Create embeddings for each chunk
         for i, chunk in enumerate(chunks):
