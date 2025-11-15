@@ -32,6 +32,10 @@ class AILMApp:
         self.last_sent_context = ""
         self.context_window = None
 
+        # Threading for multi-LLM requests
+        self.response_queue = Queue()
+        self.active_threads = []
+
         # Create main window
         self.root = ctk.CTk()
         self.root.title("AI Chat Assistant")
@@ -796,8 +800,137 @@ class AILMApp:
         )
         self.config_status_label.pack(pady=5)
 
+    def llm_worker(self, model_name, message, context, api_key, use_structured_output):
+        """
+        Worker thread function to send a request to a single LLM
+
+        Args:
+            model_name: Name of the model
+            message: User message
+            context: Context from RAG/PDFs
+            api_key: OpenRouter API key
+            use_structured_output: Whether to use structured output
+        """
+        try:
+            # Update status to processing
+            self.response_queue.put({
+                "type": "status",
+                "model": model_name,
+                "status": "processing",
+                "timestamp": datetime.now().strftime("%H:%M:%S")
+            })
+
+            # Send request
+            result = self.openrouter_client.send_message(
+                message,
+                api_key,
+                model_name,
+                context,
+                self.chat_history,
+                use_structured_output=use_structured_output
+            )
+
+            # Get context limit
+            context_limit = self.openrouter_client.get_context_limit(
+                model_name,
+                api_key
+            )
+
+            # Send success response
+            self.response_queue.put({
+                "type": "response",
+                "model": model_name,
+                "status": "completed",
+                "content": result['content'],
+                "usage": result.get('usage', {}),
+                "context_limit": context_limit,
+                "timestamp": datetime.now().strftime("%H:%M:%S")
+            })
+
+        except Exception as e:
+            # Send error response
+            self.response_queue.put({
+                "type": "error",
+                "model": model_name,
+                "status": "error",
+                "error": str(e),
+                "timestamp": datetime.now().strftime("%H:%M:%S")
+            })
+
+    def process_response_queue(self):
+        """Process responses from worker threads and update UI"""
+        try:
+            while not self.response_queue.empty():
+                response = self.response_queue.get_nowait()
+
+                if response["type"] == "status":
+                    # Update LLM status
+                    self.update_llm_status(
+                        response["model"],
+                        response["status"],
+                        {"timestamp": response["timestamp"]}
+                    )
+
+                elif response["type"] == "response":
+                    # Update LLM status with response
+                    self.update_llm_status(
+                        response["model"],
+                        response["status"],
+                        {
+                            "response": response["content"],
+                            "usage": response["usage"],
+                            "context_limit": response["context_limit"],
+                            "timestamp": response["timestamp"]
+                        }
+                    )
+
+                    # Add response to chat
+                    self.add_llm_response_to_chat(
+                        response["model"],
+                        response["content"]
+                    )
+
+                elif response["type"] == "error":
+                    # Update LLM status with error
+                    self.update_llm_status(
+                        response["model"],
+                        response["status"],
+                        {
+                            "error": response["error"],
+                            "timestamp": response["timestamp"]
+                        }
+                    )
+
+                    # Add error to chat
+                    self.add_message_to_chat(
+                        f"Erreur ({response['model']})",
+                        response["error"]
+                    )
+
+        except:
+            pass
+
+        # Schedule next check
+        self.root.after(100, self.process_response_queue)
+
+    def add_llm_response_to_chat(self, model_name, content):
+        """Add LLM response to chat display"""
+        # Parse and format if structured output
+        if self.config.get("use_structured_output", False):
+            try:
+                parsed_response = json.loads(content)
+                formatted_response = self.format_structured_response(parsed_response)
+                display_content = formatted_response
+            except json.JSONDecodeError:
+                display_content = content
+        else:
+            display_content = content
+
+        # Add to chat with model name
+        self.add_message_to_chat(f"Assistant ({model_name})", display_content)
+
     def send_message(self):
-        """Send message to the LLM"""
+        """Send message to multiple LLMs in parallel"""
         message = self.message_input.get("1.0", "end-1c").strip()
 
         if not message:
@@ -808,6 +941,15 @@ class AILMApp:
             messagebox.showerror(
                 "Erreur",
                 "Veuillez configurer votre clé API dans l'onglet Configuration"
+            )
+            return
+
+        # Get enabled models
+        enabled_models = self.get_enabled_models()
+        if not enabled_models:
+            messagebox.showerror(
+                "Erreur",
+                "Aucun modèle activé. Veuillez activer au moins un modèle dans Configuration."
             )
             return
 
@@ -830,67 +972,37 @@ class AILMApp:
         # Update context window if it's open
         self.update_context_window_if_open()
 
-        # Send to OpenRouter
-        try:
-            # Get first enabled model (for now - will be updated in Step 4)
-            enabled_models = self.get_enabled_models()
-            if not enabled_models:
-                messagebox.showerror(
-                    "Erreur",
-                    "Aucun modèle activé. Veuillez activer au moins un modèle dans Configuration."
-                )
-                self.send_button.configure(state="normal", text="Envoyer")
-                return
+        # Update chat history with user message
+        self.chat_history.append({"role": "user", "content": message})
 
-            model = enabled_models[0]
+        # Reset LLM statuses to idle
+        for model_name in enabled_models:
+            self.update_llm_status(model_name, "idle", {})
 
-            result = self.openrouter_client.send_message(
-                message,
-                self.config["api_key"],
-                model,
-                context,
-                self.chat_history,
-                use_structured_output=self.config.get("use_structured_output", False)
+        # Start worker threads for each enabled model
+        self.active_threads = []
+        for model_name in enabled_models:
+            thread = threading.Thread(
+                target=self.llm_worker,
+                args=(
+                    model_name,
+                    message,
+                    context,
+                    self.config["api_key"],
+                    self.config.get("use_structured_output", False)
+                ),
+                daemon=True
             )
+            thread.start()
+            self.active_threads.append(thread)
 
-            # Extract response content and usage info
-            response_content = result['content']
-            usage = result.get('usage', {})
-            model_used = result.get('model', self.config["model"])
+        # Start queue processor if not already running
+        if not hasattr(self, '_queue_processor_running'):
+            self._queue_processor_running = True
+            self.process_response_queue()
 
-            # Parse and format response if structured output is enabled
-            if self.config.get("use_structured_output", False):
-                try:
-                    parsed_response = json.loads(response_content)
-                    formatted_response = self.format_structured_response(parsed_response)
-                    display_content = formatted_response
-                    # Keep original JSON in history
-                    history_content = response_content
-                except json.JSONDecodeError:
-                    # If parsing fails, show as-is
-                    display_content = response_content
-                    history_content = response_content
-            else:
-                display_content = response_content
-                history_content = response_content
-
-            # Add response to chat
-            self.add_message_to_chat("Assistant", display_content)
-
-            # Update context usage display
-            if usage:
-                self.update_context_usage(usage, model_used)
-
-            # Update chat history
-            self.chat_history.append({"role": "user", "content": message})
-            self.chat_history.append({"role": "assistant", "content": history_content})
-
-        except Exception as e:
-            messagebox.showerror("Erreur", f"Erreur lors de la communication avec l'API:\n{str(e)}")
-            self.add_message_to_chat("Système", f"Erreur: {str(e)}")
-
-        # Re-enable send button
-        self.send_button.configure(state="normal", text="Envoyer")
+        # Re-enable send button after a short delay (threads run in background)
+        self.root.after(1000, lambda: self.send_button.configure(state="normal", text="Envoyer"))
 
     def format_structured_response(self, parsed_json):
         """Format a structured JSON response for display"""
