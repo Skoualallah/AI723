@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 from pdf_handler import PDFHandler
 from openrouter_client import OpenRouterClient
+from rag_handler import RAGHandler
 
 class AILMApp:
     def __init__(self):
@@ -17,6 +18,10 @@ class AILMApp:
         # Initialize handlers
         self.pdf_handler = PDFHandler()
         self.openrouter_client = OpenRouterClient()
+        self.rag_handler = RAGHandler()
+
+        # Load RAG embeddings
+        self.rag_handler.load_embeddings()
 
         # Chat history
         self.chat_history = []
@@ -54,7 +59,8 @@ class AILMApp:
                 pass
         return {
             "api_key": "",
-            "model": "anthropic/claude-3.5-sonnet"
+            "model": "anthropic/claude-3.5-sonnet",
+            "use_rag": False
         }
 
     def save_config(self):
@@ -177,6 +183,49 @@ class AILMApp:
             font=("Arial", 18, "bold")
         )
         title_label.pack(pady=10)
+
+        # RAG toggle frame
+        rag_frame = ctk.CTkFrame(self.tab_pdf)
+        rag_frame.pack(fill="x", padx=20, pady=10)
+
+        # RAG label
+        rag_label = ctk.CTkLabel(
+            rag_frame,
+            text="Mode RAG (Retrieval-Augmented Generation):",
+            font=("Arial", 13, "bold")
+        )
+        rag_label.pack(side="left", padx=10, pady=10)
+
+        # RAG switch
+        self.rag_switch = ctk.CTkSwitch(
+            rag_frame,
+            text="Activé" if self.config.get("use_rag", False) else "Désactivé",
+            command=self.toggle_rag,
+            font=("Arial", 12)
+        )
+        if self.config.get("use_rag", False):
+            self.rag_switch.select()
+        self.rag_switch.pack(side="left", padx=10, pady=10)
+
+        # RAG info label
+        self.rag_info_label = ctk.CTkLabel(
+            rag_frame,
+            text="",
+            font=("Arial", 10),
+            text_color="gray"
+        )
+        self.rag_info_label.pack(side="left", padx=10, pady=10)
+        self.update_rag_info()
+
+        # RAG description
+        rag_desc = ctk.CTkLabel(
+            self.tab_pdf,
+            text="Le mode RAG utilise la recherche sémantique pour trouver les passages pertinents.\n"
+                 "Recommandé pour les PDFs volumineux (>100 pages).",
+            font=("Arial", 10),
+            text_color="gray"
+        )
+        rag_desc.pack(pady=(0, 10))
 
         # Upload button
         upload_btn = ctk.CTkButton(
@@ -314,7 +363,7 @@ class AILMApp:
         self.root.update()
 
         # Build context from PDF knowledge
-        context = self.build_context()
+        context = self.build_context(message)
 
         # Send to OpenRouter
         try:
@@ -349,8 +398,13 @@ class AILMApp:
         # Re-enable send button
         self.send_button.configure(state="normal", text="Envoyer")
 
-    def build_context(self):
+    def build_context(self, query=""):
         """Build context from PDF knowledge base"""
+        # If RAG is enabled and we have a query, use RAG
+        if self.config.get("use_rag", False) and query:
+            return self.rag_handler.build_rag_context(query, top_k=5)
+
+        # Otherwise, use traditional full context
         if not self.pdf_knowledge:
             return ""
 
@@ -517,6 +571,77 @@ class AILMApp:
 
         return "\n".join(context_parts)
 
+    def toggle_rag(self):
+        """Toggle RAG mode on/off"""
+        is_enabled = self.rag_switch.get()
+        self.config["use_rag"] = is_enabled
+        self.save_config()
+
+        # Update switch text
+        self.rag_switch.configure(text="Activé" if is_enabled else "Désactivé")
+
+        # Update info
+        self.update_rag_info()
+
+        # Show message
+        if is_enabled:
+            messagebox.showinfo(
+                "RAG Activé",
+                "Le mode RAG est maintenant activé.\n\n"
+                "Les PDFs existants vont être indexés pour la recherche sémantique.\n"
+                "Cela peut prendre quelques instants..."
+            )
+            # Process existing PDFs for RAG
+            self.reindex_pdfs_for_rag()
+        else:
+            messagebox.showinfo(
+                "RAG Désactivé",
+                "Le mode RAG est désactivé.\n\n"
+                "L'intégralité du contenu des PDFs sera envoyée au LLM."
+            )
+
+    def update_rag_info(self):
+        """Update RAG information label"""
+        stats = self.rag_handler.get_stats()
+        if stats['total_chunks'] > 0:
+            self.rag_info_label.configure(
+                text=f"({stats['total_chunks']} chunks indexés)"
+            )
+        else:
+            self.rag_info_label.configure(text="(Aucun chunk indexé)")
+
+    def reindex_pdfs_for_rag(self):
+        """Reindex all existing PDFs for RAG"""
+        if not self.pdf_knowledge:
+            return
+
+        # Clear existing RAG data
+        self.rag_handler.clear_all()
+
+        # Process each PDF
+        for pdf in self.pdf_knowledge:
+            try:
+                chunks_count = self.rag_handler.process_pdf(
+                    pdf['filename'],
+                    pdf['content']
+                )
+                print(f"Indexed {pdf['filename']}: {chunks_count} chunks")
+            except Exception as e:
+                print(f"Error indexing {pdf['filename']}: {e}")
+
+        # Save embeddings
+        self.rag_handler.save_embeddings()
+
+        # Update info
+        self.update_rag_info()
+
+        messagebox.showinfo(
+            "Indexation Terminée",
+            f"Indexation terminée!\n\n"
+            f"{self.rag_handler.get_stats()['total_chunks']} chunks créés pour "
+            f"{len(self.pdf_knowledge)} PDF(s)."
+        )
+
     def upload_pdf(self):
         """Upload and process a PDF file"""
         file_path = filedialog.askopenfilename(
@@ -544,6 +669,8 @@ class AILMApp:
                     if not messagebox.askyesno("Confirmation", f"{filename} existe déjà. Voulez-vous le remplacer?"):
                         return
                     self.pdf_knowledge.remove(pdf)
+                    # Remove from RAG if exists
+                    self.rag_handler.remove_pdf(filename)
                     break
 
             # Add to knowledge base
@@ -556,10 +683,28 @@ class AILMApp:
             # Save to file
             self.save_pdf_knowledge()
 
+            # Process for RAG if enabled
+            if self.config.get("use_rag", False):
+                try:
+                    chunks_count = self.rag_handler.process_pdf(filename, text)
+                    self.rag_handler.save_embeddings()
+                    self.update_rag_info()
+                    messagebox.showinfo(
+                        "Succès",
+                        f"{filename} a été ajouté à la base de connaissances!\n\n"
+                        f"{chunks_count} chunks créés pour la recherche sémantique."
+                    )
+                except Exception as e:
+                    messagebox.showwarning(
+                        "Avertissement",
+                        f"{filename} a été ajouté mais l'indexation RAG a échoué:\n{str(e)}\n\n"
+                        "Le PDF sera disponible en mode traditionnel."
+                    )
+            else:
+                messagebox.showinfo("Succès", f"{filename} a été ajouté à la base de connaissances!")
+
             # Update display
             self.update_pdf_list()
-
-            messagebox.showinfo("Succès", f"{filename} a été ajouté à la base de connaissances!")
 
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors du traitement du PDF:\n{str(e)}")
@@ -609,8 +754,16 @@ class AILMApp:
         """Remove a PDF from the knowledge base"""
         pdf = self.pdf_knowledge[index]
         if messagebox.askyesno("Confirmation", f"Voulez-vous vraiment supprimer {pdf['filename']}?"):
+            # Remove from knowledge base
             self.pdf_knowledge.pop(index)
             self.save_pdf_knowledge()
+
+            # Remove from RAG
+            self.rag_handler.remove_pdf(pdf['filename'])
+            self.rag_handler.save_embeddings()
+            self.update_rag_info()
+
+            # Update display
             self.update_pdf_list()
 
     def save_configuration(self):
