@@ -7,9 +7,13 @@ class OpenRouterClient:
 
     def __init__(self):
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.models_api_url = "https://openrouter.ai/api/v1/models"
 
-        # Common model context limits (in tokens)
-        self.model_context_limits = {
+        # Cache for model information
+        self.model_info_cache = {}
+
+        # Fallback model context limits (in tokens) if API call fails
+        self.fallback_context_limits = {
             "anthropic/claude-3.5-sonnet": 200000,
             "anthropic/claude-3-opus": 200000,
             "anthropic/claude-3-sonnet": 200000,
@@ -23,17 +27,70 @@ class OpenRouterClient:
             "meta-llama/llama-3.1-8b-instruct": 131072,
         }
 
-    def get_context_limit(self, model):
+    def get_model_info(self, model, api_key):
         """
-        Get the context limit for a specific model
+        Get model information from OpenRouter API
 
         Args:
             model: Model name
+            api_key: OpenRouter API key
 
         Returns:
-            Context limit in tokens (default 8192 if unknown)
+            Model information dictionary or None if error
         """
-        return self.model_context_limits.get(model, 8192)
+        # Check cache first
+        if model in self.model_info_cache:
+            return self.model_info_cache[model]
+
+        try:
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+            }
+
+            response = requests.get(
+                self.models_api_url,
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                models_list = data.get('data', [])
+
+                # Find the specific model
+                for model_info in models_list:
+                    if model_info.get('id') == model:
+                        # Cache the model info
+                        self.model_info_cache[model] = model_info
+                        return model_info
+
+            return None
+
+        except Exception:
+            # If API call fails, return None and use fallback
+            return None
+
+    def get_context_limit(self, model, api_key=None):
+        """
+        Get the context limit for a specific model from OpenRouter API
+
+        Args:
+            model: Model name
+            api_key: OpenRouter API key (optional, needed for API call)
+
+        Returns:
+            Context limit in tokens
+        """
+        # Try to get from API if api_key is provided
+        if api_key:
+            model_info = self.get_model_info(model, api_key)
+            if model_info:
+                context_length = model_info.get('context_length')
+                if context_length:
+                    return context_length
+
+        # Fallback to hardcoded values
+        return self.fallback_context_limits.get(model, 8192)
 
     def send_message(self, message, api_key, model, context="", chat_history=None):
         """

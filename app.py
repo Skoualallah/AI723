@@ -385,8 +385,11 @@ class AILMApp:
         completion_tokens = usage.get('completion_tokens', 0)
         total_tokens = usage.get('total_tokens', prompt_tokens + completion_tokens)
 
-        # Get context limit for the model
-        context_limit = self.openrouter_client.get_context_limit(model)
+        # Get context limit for the model from OpenRouter API
+        context_limit = self.openrouter_client.get_context_limit(
+            model,
+            self.config.get("api_key")
+        )
 
         # Calculate percentage
         percentage = (prompt_tokens / context_limit) * 100 if context_limit > 0 else 0
