@@ -26,6 +26,10 @@ class AILMApp:
         # Chat history
         self.chat_history = []
 
+        # Context tracking
+        self.last_sent_context = ""
+        self.context_window = None
+
         # Create main window
         self.root = ctk.CTk()
         self.root.title("AI Chat Assistant")
@@ -365,6 +369,12 @@ class AILMApp:
         # Build context from PDF knowledge
         context = self.build_context(message)
 
+        # Store the context that will be sent
+        self.last_sent_context = context
+
+        # Update context window if it's open
+        self.update_context_window_if_open()
+
         # Send to OpenRouter
         try:
             result = self.openrouter_client.send_message(
@@ -439,6 +449,12 @@ class AILMApp:
         self.chat_display.configure(state="disabled")
         self.chat_history = []
 
+        # Reset context
+        self.last_sent_context = ""
+
+        # Update context window if open
+        self.update_context_window_if_open()
+
         # Reset context usage display
         self.context_label.configure(text="Utilisation du contexte: -- / --")
         self.context_progress.set(0)
@@ -484,73 +500,126 @@ class AILMApp:
 
     def show_context_window(self):
         """Show a window with the complete context that will be sent to the LLM"""
-        # Create toplevel window
-        context_window = ctk.CTkToplevel(self.root)
-        context_window.title("Contexte Complet du LLM")
-        context_window.geometry("800x600")
+        # Check if window already exists and is visible
+        if self.context_window is not None and self.context_window.winfo_exists():
+            # Window exists, just update content and focus
+            self.update_context_window_content()
+            self.context_window.focus()
+            return
+
+        # Create new toplevel window
+        self.context_window = ctk.CTkToplevel(self.root)
+        self.context_window.title("Contexte Complet du LLM")
+        self.context_window.geometry("800x600")
+
+        # Bind window close event to reset reference
+        self.context_window.protocol("WM_DELETE_WINDOW", self.on_context_window_close)
 
         # Title
         title_label = ctk.CTkLabel(
-            context_window,
-            text="Contexte qui sera envoyé au LLM",
+            self.context_window,
+            text="Contexte envoyé au LLM",
             font=("Arial", 16, "bold")
         )
         title_label.pack(pady=10)
 
         # Info label
-        info_label = ctk.CTkLabel(
-            context_window,
-            text="Ceci est une prévisualisation du contexte complet (PDFs + historique de chat)",
+        self.context_info_label = ctk.CTkLabel(
+            self.context_window,
+            text="",
             font=("Arial", 11),
             text_color="gray"
         )
-        info_label.pack(pady=(0, 10))
-
-        # Build complete context
-        complete_context = self.build_complete_context()
+        self.context_info_label.pack(pady=(0, 10))
 
         # Text display
-        context_display = ctk.CTkTextbox(
-            context_window,
+        self.context_display = ctk.CTkTextbox(
+            self.context_window,
             wrap="word",
             font=("Courier", 11)
         )
-        context_display.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        self.context_display.pack(fill="both", expand=True, padx=10, pady=(0, 10))
 
-        # Insert context
-        context_display.insert("1.0", complete_context)
-        context_display.configure(state="disabled")
+        # Update content
+        self.update_context_window_content()
 
         # Close button
         close_button = ctk.CTkButton(
-            context_window,
+            self.context_window,
             text="Fermer",
-            command=context_window.destroy,
+            command=self.on_context_window_close,
             width=120,
             height=35
         )
         close_button.pack(pady=10)
 
         # Focus on the window
-        context_window.focus()
+        self.context_window.focus()
+
+    def on_context_window_close(self):
+        """Handle context window close event"""
+        if self.context_window is not None:
+            self.context_window.destroy()
+            self.context_window = None
+
+    def update_context_window_if_open(self):
+        """Update context window content if it's open"""
+        if self.context_window is not None and self.context_window.winfo_exists():
+            self.update_context_window_content()
+
+    def update_context_window_content(self):
+        """Update the content of the context window"""
+        if self.context_window is None or not self.context_window.winfo_exists():
+            return
+
+        # Build complete context
+        complete_context = self.build_complete_context()
+
+        # Update info label
+        mode = "RAG (recherche sémantique)" if self.config.get("use_rag", False) else "Traditionnel (contenu complet)"
+        self.context_info_label.configure(
+            text=f"Mode: {mode} | Mis à jour automatiquement lors de l'envoi de messages"
+        )
+
+        # Update text display
+        self.context_display.configure(state="normal")
+        self.context_display.delete("1.0", "end")
+        self.context_display.insert("1.0", complete_context)
+        self.context_display.configure(state="disabled")
 
     def build_complete_context(self):
         """Build the complete context that will be sent to the LLM"""
         context_parts = []
 
-        # PDF Knowledge Base
-        pdf_context = self.build_context()
-        if pdf_context:
+        # PDF Knowledge Base - Use last sent context if available
+        if self.last_sent_context:
             context_parts.append("=" * 80)
-            context_parts.append("CONTEXTE DES PDFs")
+            context_parts.append("CONTEXTE DES PDFs (DERNIER ENVOYÉ)")
             context_parts.append("=" * 80)
-            context_parts.append(pdf_context)
+            context_parts.append(self.last_sent_context)
+            context_parts.append("")
+        elif self.pdf_knowledge:
+            # No message sent yet, show preview
+            context_parts.append("=" * 80)
+            context_parts.append("CONTEXTE DES PDFs (PRÉVISUALISATION)")
+            context_parts.append("=" * 80)
+            if self.config.get("use_rag", False):
+                context_parts.append("[Mode RAG activé - Le contexte sera généré lors de l'envoi d'un message]")
+                context_parts.append("")
+                stats = self.rag_handler.get_stats()
+                context_parts.append(f"Statistiques RAG:")
+                context_parts.append(f"  • Total de chunks indexés: {stats['total_chunks']}")
+                context_parts.append(f"  • Nombre de PDFs: {stats['total_pdfs']}")
+                context_parts.append("")
+            else:
+                pdf_context = self.build_context()
+                context_parts.append(pdf_context)
             context_parts.append("")
 
         # Chat History
         if self.chat_history:
             context_parts.append("=" * 80)
-            context_parts.append("HISTORIQUE DE CONVERSATION")
+            context_parts.append("HISTORIQUE DE CONVERSATION (10 DERNIERS MESSAGES)")
             context_parts.append("=" * 80)
             context_parts.append("")
 
