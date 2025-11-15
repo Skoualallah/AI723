@@ -201,6 +201,28 @@ class AILMApp:
         )
         self.view_context_button.pack(side="right", padx=10, pady=5)
 
+        # Answer histogram frame (for structured output)
+        self.histogram_frame = ctk.CTkFrame(self.tab_chat)
+        self.histogram_frame.pack(fill="x", padx=10, pady=(10, 0))
+
+        histogram_title = ctk.CTkLabel(
+            self.histogram_frame,
+            text="📊 Distribution des Réponses",
+            font=("Arial", 12, "bold")
+        )
+        histogram_title.pack(side="left", padx=10, pady=5)
+
+        # Histogram bars container
+        self.histogram_bars_frame = ctk.CTkFrame(self.histogram_frame, fg_color="transparent")
+        self.histogram_bars_frame.pack(side="left", fill="x", expand=True, padx=10, pady=5)
+
+        # Dictionary to store answer counts and label widgets
+        self.answer_counts = {}
+        self.histogram_labels = {}
+
+        # Hide histogram by default (shown when structured output is active)
+        self.histogram_frame.pack_forget()
+
         # Chat display area
         self.chat_display = ctk.CTkTextbox(
             self.tab_chat,
@@ -921,6 +943,12 @@ class AILMApp:
                 parsed_response = json.loads(content)
                 formatted_response = self.format_structured_response(parsed_response)
                 display_content = formatted_response
+
+                # Update histogram if final_answer_letter is present
+                answer_letter = parsed_response.get("final_answer_letter", "").strip().upper()
+                if answer_letter:
+                    self.update_histogram(answer_letter)
+
             except json.JSONDecodeError:
                 display_content = content
         else:
@@ -928,6 +956,87 @@ class AILMApp:
 
         # Add to chat with model name
         self.add_message_to_chat(f"Assistant ({model_name})", display_content)
+
+    def reset_histogram(self):
+        """Reset the histogram for a new question"""
+        self.answer_counts = {}
+
+        # Clear histogram labels
+        for widget in self.histogram_bars_frame.winfo_children():
+            widget.destroy()
+        self.histogram_labels = {}
+
+        # Show or hide histogram based on structured output setting
+        if self.config.get("use_structured_output", False):
+            self.histogram_frame.pack(fill="x", padx=10, pady=(10, 0), after=self.tab_chat.winfo_children()[0])
+        else:
+            self.histogram_frame.pack_forget()
+
+    def update_histogram(self, answer_letter):
+        """Update the histogram with a new answer letter"""
+        if not answer_letter:
+            return
+
+        # Increment count
+        if answer_letter not in self.answer_counts:
+            self.answer_counts[answer_letter] = 0
+        self.answer_counts[answer_letter] += 1
+
+        # Update display
+        self.render_histogram()
+
+    def render_histogram(self):
+        """Render the histogram visualization"""
+        # Clear existing widgets
+        for widget in self.histogram_bars_frame.winfo_children():
+            widget.destroy()
+        self.histogram_labels = {}
+
+        if not self.answer_counts:
+            return
+
+        # Sort by letter
+        sorted_letters = sorted(self.answer_counts.keys())
+
+        # Create a label for each letter
+        for letter in sorted_letters:
+            count = self.answer_counts[letter]
+
+            # Container for each bar
+            bar_container = ctk.CTkFrame(self.histogram_bars_frame, fg_color="transparent")
+            bar_container.pack(side="left", padx=5)
+
+            # Letter label
+            letter_label = ctk.CTkLabel(
+                bar_container,
+                text=letter,
+                font=("Arial", 14, "bold"),
+                width=30
+            )
+            letter_label.pack()
+
+            # Count label with visual emphasis
+            count_label = ctk.CTkLabel(
+                bar_container,
+                text=str(count),
+                font=("Arial", 16, "bold"),
+                text_color="green",
+                width=30
+            )
+            count_label.pack()
+
+            # Visual bar representation (progress bar)
+            max_count = max(self.answer_counts.values())
+            bar_height = min((count / max_count) * 50, 50) if max_count > 0 else 0
+
+            bar = ctk.CTkProgressBar(
+                bar_container,
+                width=30,
+                height=int(bar_height),
+                orientation="vertical"
+            )
+            bar.set(1.0)  # Full bar, height represents the value
+            bar.pack(pady=2)
 
     def send_message(self):
         """Send message to multiple LLMs in parallel"""
@@ -974,6 +1083,9 @@ class AILMApp:
 
         # Update chat history with user message
         self.chat_history.append({"role": "user", "content": message})
+
+        # Reset histogram for new question
+        self.reset_histogram()
 
         # Reset LLM statuses to idle
         for model_name in enabled_models:
