@@ -92,7 +92,7 @@ class OpenRouterClient:
         # Fallback to hardcoded values
         return self.fallback_context_limits.get(model, 8192)
 
-    def send_message(self, message, api_key, model, context="", chat_history=None):
+    def send_message(self, message, api_key, model, context="", chat_history=None, use_structured_output=False):
         """
         Send a message to OpenRouter API
 
@@ -102,6 +102,7 @@ class OpenRouterClient:
             model: Model to use (e.g., "anthropic/claude-3.5-sonnet")
             context: Additional context from PDF knowledge base
             chat_history: Previous chat history
+            use_structured_output: Whether to use structured JSON output
 
         Returns:
             Dictionary with:
@@ -142,6 +143,31 @@ class OpenRouterClient:
             "model": model,
             "messages": messages
         }
+
+        # Add structured output schema if enabled
+        if use_structured_output:
+            data["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "structured_response",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "explanation": {
+                                "type": "string",
+                                "description": "Detailed explanation of the reasoning"
+                            },
+                            "final_answer": {
+                                "type": "string",
+                                "description": "The final answer to the question"
+                            }
+                        },
+                        "required": ["explanation", "final_answer"],
+                        "additionalProperties": False
+                    }
+                }
+            }
 
         try:
             # Send request

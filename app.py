@@ -67,7 +67,8 @@ class AILMApp:
             "use_rag": False,
             "rag_chunk_size": 500,
             "rag_chunk_overlap": 50,
-            "rag_top_k": 5
+            "rag_top_k": 5,
+            "use_structured_output": False
         }
 
     def save_config(self):
@@ -420,6 +421,43 @@ class AILMApp:
         )
         info_label.pack(pady=5)
 
+        # Structured Output section
+        structured_frame = ctk.CTkFrame(self.tab_config)
+        structured_frame.pack(fill="x", padx=20, pady=10)
+
+        structured_label = ctk.CTkLabel(
+            structured_frame,
+            text="Structured Output (Sortie Structurée):",
+            font=("Arial", 14, "bold")
+        )
+        structured_label.pack(pady=5)
+
+        # Structured output switch
+        self.structured_output_switch = ctk.CTkSwitch(
+            structured_frame,
+            text="Activé" if self.config.get("use_structured_output", False) else "Désactivé",
+            command=self.toggle_structured_output,
+            font=("Arial", 12)
+        )
+        if self.config.get("use_structured_output", False):
+            self.structured_output_switch.select()
+        self.structured_output_switch.pack(pady=5)
+
+        # Structured output description
+        structured_desc = ctk.CTkLabel(
+            structured_frame,
+            text="Format de réponse JSON:\n"
+                 '{\n'
+                 '  "explanation": "Explication détaillée",\n'
+                 '  "final_answer": "Réponse finale"\n'
+                 '}\n\n'
+                 "Compatible avec: OpenAI GPT-4, GPT-4 Turbo, GPT-3.5 Turbo",
+            font=("Arial", 10),
+            text_color="gray",
+            justify="left"
+        )
+        structured_desc.pack(pady=5)
+
         # Save button
         save_btn = ctk.CTkButton(
             self.tab_config,
@@ -479,7 +517,8 @@ class AILMApp:
                 self.config["api_key"],
                 self.config["model"],
                 context,
-                self.chat_history
+                self.chat_history,
+                use_structured_output=self.config.get("use_structured_output", False)
             )
 
             # Extract response content and usage info
@@ -487,8 +526,24 @@ class AILMApp:
             usage = result.get('usage', {})
             model_used = result.get('model', self.config["model"])
 
+            # Parse and format response if structured output is enabled
+            if self.config.get("use_structured_output", False):
+                try:
+                    parsed_response = json.loads(response_content)
+                    formatted_response = self.format_structured_response(parsed_response)
+                    display_content = formatted_response
+                    # Keep original JSON in history
+                    history_content = response_content
+                except json.JSONDecodeError:
+                    # If parsing fails, show as-is
+                    display_content = response_content
+                    history_content = response_content
+            else:
+                display_content = response_content
+                history_content = response_content
+
             # Add response to chat
-            self.add_message_to_chat("Assistant", response_content)
+            self.add_message_to_chat("Assistant", display_content)
 
             # Update context usage display
             if usage:
@@ -496,7 +551,7 @@ class AILMApp:
 
             # Update chat history
             self.chat_history.append({"role": "user", "content": message})
-            self.chat_history.append({"role": "assistant", "content": response_content})
+            self.chat_history.append({"role": "assistant", "content": history_content})
 
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors de la communication avec l'API:\n{str(e)}")
@@ -504,6 +559,22 @@ class AILMApp:
 
         # Re-enable send button
         self.send_button.configure(state="normal", text="Envoyer")
+
+    def format_structured_response(self, parsed_json):
+        """Format a structured JSON response for display"""
+        explanation = parsed_json.get("explanation", "")
+        final_answer = parsed_json.get("final_answer", "")
+
+        formatted = ""
+        if explanation:
+            formatted += "📋 Explication:\n"
+            formatted += f"{explanation}\n\n"
+
+        if final_answer:
+            formatted += "✅ Réponse finale:\n"
+            formatted += f"{final_answer}"
+
+        return formatted if formatted else json.dumps(parsed_json, indent=2, ensure_ascii=False)
 
     def build_context(self, query=""):
         """Build context from PDF knowledge base"""
@@ -1002,6 +1073,31 @@ class AILMApp:
 
             # Update display
             self.update_pdf_list()
+
+    def toggle_structured_output(self):
+        """Toggle structured output on/off"""
+        is_enabled = self.structured_output_switch.get()
+        self.config["use_structured_output"] = is_enabled
+        self.save_config()
+
+        # Update switch text
+        self.structured_output_switch.configure(text="Activé" if is_enabled else "Désactivé")
+
+        # Show info message
+        if is_enabled:
+            messagebox.showinfo(
+                "Structured Output Activé",
+                "Les réponses du LLM seront structurées en JSON avec:\n\n"
+                "• explanation: Explication détaillée\n"
+                "• final_answer: Réponse finale\n\n"
+                "Note: Cette fonctionnalité nécessite un modèle compatible\n"
+                "(OpenAI GPT-4, GPT-4 Turbo, GPT-3.5 Turbo)"
+            )
+        else:
+            messagebox.showinfo(
+                "Structured Output Désactivé",
+                "Les réponses du LLM seront en texte libre."
+            )
 
     def save_configuration(self):
         """Save the configuration"""
