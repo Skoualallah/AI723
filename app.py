@@ -674,38 +674,71 @@ class AILMApp:
         if self.config.get("api_key"):
             self.api_key_entry.insert(0, self.config["api_key"])
 
-        # Model section
-        model_frame = ctk.CTkFrame(self.tab_config)
-        model_frame.pack(fill="x", padx=20, pady=10)
+        # Models section
+        models_frame = ctk.CTkFrame(self.tab_config)
+        models_frame.pack(fill="both", expand=True, padx=20, pady=10)
 
-        model_label = ctk.CTkLabel(
-            model_frame,
-            text="Modèle:",
-            font=("Arial", 14)
+        models_label = ctk.CTkLabel(
+            models_frame,
+            text="Modèles LLM:",
+            font=("Arial", 14, "bold")
         )
-        model_label.pack(pady=5)
-
-        self.model_entry = ctk.CTkEntry(
-            model_frame,
-            placeholder_text="Ex: anthropic/claude-3.5-sonnet",
-            width=400
-        )
-        self.model_entry.pack(pady=5)
-        # Get first model from models list for backward compatibility
-        if self.config.get("models") and len(self.config["models"]) > 0:
-            self.model_entry.insert(0, self.config["models"][0]["name"])
+        models_label.pack(pady=5)
 
         # Info label
         info_label = ctk.CTkLabel(
-            model_frame,
-            text="Exemples de modèles:\n"
-                 "• anthropic/claude-3.5-sonnet\n"
-                 "• openai/gpt-4-turbo\n"
-                 "• google/gemini-pro",
+            models_frame,
+            text="Gérez vos modèles LLM - Les modèles activés recevront la même question en parallèle",
             font=("Arial", 10),
             text_color="gray"
         )
-        info_label.pack(pady=5)
+        info_label.pack(pady=(0, 10))
+
+        # Scrollable frame for models list
+        self.models_list_frame = ctk.CTkScrollableFrame(
+            models_frame,
+            height=200
+        )
+        self.models_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
+
+        # Add model section
+        add_model_frame = ctk.CTkFrame(models_frame, fg_color="transparent")
+        add_model_frame.pack(fill="x", padx=5, pady=10)
+
+        add_label = ctk.CTkLabel(
+            add_model_frame,
+            text="Ajouter un modèle:",
+            font=("Arial", 11)
+        )
+        add_label.pack(side="left", padx=5)
+
+        self.new_model_entry = ctk.CTkEntry(
+            add_model_frame,
+            placeholder_text="Ex: anthropic/claude-3.5-sonnet",
+            width=300
+        )
+        self.new_model_entry.pack(side="left", padx=5)
+
+        add_btn = ctk.CTkButton(
+            add_model_frame,
+            text="Ajouter",
+            command=self.add_model_to_list,
+            width=100,
+            height=30
+        )
+        add_btn.pack(side="left", padx=5)
+
+        # Examples label
+        examples_label = ctk.CTkLabel(
+            models_frame,
+            text="Exemples: anthropic/claude-3.5-sonnet, openai/gpt-4-turbo, google/gemini-pro",
+            font=("Arial", 9),
+            text_color="gray"
+        )
+        examples_label.pack(pady=(0, 5))
+
+        # Initialize models list display
+        self.update_models_list()
 
         # Structured Output section
         structured_frame = ctk.CTkFrame(self.tab_config)
@@ -1404,28 +1437,118 @@ class AILMApp:
                 "Les réponses du LLM seront en texte libre."
             )
 
+    def update_models_list(self):
+        """Update the models list display"""
+        # Clear existing widgets
+        for widget in self.models_list_frame.winfo_children():
+            widget.destroy()
+
+        models = self.config.get("models", [])
+
+        if not models:
+            # No models
+            no_models_label = ctk.CTkLabel(
+                self.models_list_frame,
+                text="Aucun modèle configuré\n\nAjoutez un modèle ci-dessous",
+                font=("Arial", 11),
+                text_color="gray"
+            )
+            no_models_label.pack(pady=20)
+            return
+
+        # Create a row for each model
+        for i, model in enumerate(models):
+            model_row = ctk.CTkFrame(self.models_list_frame)
+            model_row.pack(fill="x", padx=5, pady=5)
+
+            # Model name
+            name_label = ctk.CTkLabel(
+                model_row,
+                text=f"🤖 {model['name']}",
+                font=("Arial", 11),
+                anchor="w"
+            )
+            name_label.pack(side="left", padx=10, pady=5, fill="x", expand=True)
+
+            # Enable/Disable switch
+            is_enabled = model.get("enabled", False)
+            switch = ctk.CTkSwitch(
+                model_row,
+                text="Activé" if is_enabled else "Désactivé",
+                command=lambda m=model['name']: self.toggle_model_enabled(m),
+                font=("Arial", 10)
+            )
+            if is_enabled:
+                switch.select()
+            switch.pack(side="left", padx=5)
+
+            # Remove button
+            remove_btn = ctk.CTkButton(
+                model_row,
+                text="Supprimer",
+                command=lambda m=model['name']: self.remove_model_from_list(m),
+                width=90,
+                height=28,
+                fg_color="red"
+            )
+            remove_btn.pack(side="right", padx=5)
+
+    def add_model_to_list(self):
+        """Add a new model to the list"""
+        model_name = self.new_model_entry.get().strip()
+
+        if not model_name:
+            messagebox.showerror("Erreur", "Veuillez entrer un nom de modèle")
+            return
+
+        # Add the model
+        if self.add_model(model_name, enabled=True):
+            # Clear input
+            self.new_model_entry.delete(0, "end")
+
+            # Update displays
+            self.update_models_list()
+            self.update_llm_cards()
+
+            messagebox.showinfo("Succès", f"Modèle '{model_name}' ajouté avec succès!")
+        else:
+            messagebox.showerror("Erreur", f"Le modèle '{model_name}' existe déjà")
+
+    def remove_model_from_list(self, model_name):
+        """Remove a model from the list"""
+        if messagebox.askyesno("Confirmation", f"Voulez-vous vraiment supprimer '{model_name}'?"):
+            if self.remove_model(model_name):
+                # Update displays
+                self.update_models_list()
+                self.update_llm_cards()
+
+                messagebox.showinfo("Succès", f"Modèle '{model_name}' supprimé")
+            else:
+                messagebox.showerror("Erreur", "Impossible de supprimer le modèle")
+
+    def toggle_model_enabled(self, model_name):
+        """Toggle a model's enabled status"""
+        if self.toggle_model(model_name):
+            # Update displays
+            self.update_models_list()
+            self.update_llm_cards()
+
+            # Get new status
+            for model in self.config.get("models", []):
+                if model["name"] == model_name:
+                    status = "activé" if model.get("enabled", False) else "désactivé"
+                    messagebox.showinfo("Succès", f"Modèle '{model_name}' {status}")
+                    break
+
     def save_configuration(self):
         """Save the configuration"""
         api_key = self.api_key_entry.get().strip()
-        model = self.model_entry.get().strip()
 
         if not api_key:
             messagebox.showerror("Erreur", "Veuillez entrer une clé API")
             return
 
-        if not model:
-            messagebox.showerror("Erreur", "Veuillez entrer un modèle")
-            return
-
         self.config["api_key"] = api_key
-
-        # Update models list - replace first model or create new list
-        if "models" not in self.config or not self.config["models"]:
-            self.config["models"] = [{"name": model, "enabled": True}]
-        else:
-            # Update the first model in the list
-            self.config["models"][0] = {"name": model, "enabled": True}
-
         self.save_config()
 
         self.config_status_label.configure(
