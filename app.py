@@ -79,6 +79,35 @@ class AILMApp:
 
     def setup_chat_tab(self):
         """Setup the chat interface tab"""
+        # Context usage frame
+        context_frame = ctk.CTkFrame(self.tab_chat)
+        context_frame.pack(fill="x", padx=10, pady=(10, 0))
+
+        # Context usage label
+        self.context_label = ctk.CTkLabel(
+            context_frame,
+            text="Utilisation du contexte: -- / --",
+            font=("Arial", 11)
+        )
+        self.context_label.pack(side="left", padx=10, pady=5)
+
+        # Context usage progress bar
+        self.context_progress = ctk.CTkProgressBar(
+            context_frame,
+            width=300,
+            height=15
+        )
+        self.context_progress.pack(side="left", padx=10, pady=5)
+        self.context_progress.set(0)
+
+        # Percentage label
+        self.context_percentage = ctk.CTkLabel(
+            context_frame,
+            text="0%",
+            font=("Arial", 11, "bold")
+        )
+        self.context_percentage.pack(side="left", padx=5, pady=5)
+
         # Chat display area
         self.chat_display = ctk.CTkTextbox(
             self.tab_chat,
@@ -278,7 +307,7 @@ class AILMApp:
 
         # Send to OpenRouter
         try:
-            response = self.openrouter_client.send_message(
+            result = self.openrouter_client.send_message(
                 message,
                 self.config["api_key"],
                 self.config["model"],
@@ -286,12 +315,21 @@ class AILMApp:
                 self.chat_history
             )
 
+            # Extract response content and usage info
+            response_content = result['content']
+            usage = result.get('usage', {})
+            model_used = result.get('model', self.config["model"])
+
             # Add response to chat
-            self.add_message_to_chat("Assistant", response)
+            self.add_message_to_chat("Assistant", response_content)
+
+            # Update context usage display
+            if usage:
+                self.update_context_usage(usage, model_used)
 
             # Update chat history
             self.chat_history.append({"role": "user", "content": message})
-            self.chat_history.append({"role": "assistant", "content": response})
+            self.chat_history.append({"role": "assistant", "content": response_content})
 
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors de la communication avec l'API:\n{str(e)}")
@@ -335,6 +373,46 @@ class AILMApp:
         self.chat_display.delete("1.0", "end")
         self.chat_display.configure(state="disabled")
         self.chat_history = []
+
+        # Reset context usage display
+        self.context_label.configure(text="Utilisation du contexte: -- / --")
+        self.context_progress.set(0)
+        self.context_percentage.configure(text="0%")
+
+    def update_context_usage(self, usage, model):
+        """Update the context usage display"""
+        prompt_tokens = usage.get('prompt_tokens', 0)
+        completion_tokens = usage.get('completion_tokens', 0)
+        total_tokens = usage.get('total_tokens', prompt_tokens + completion_tokens)
+
+        # Get context limit for the model
+        context_limit = self.openrouter_client.get_context_limit(model)
+
+        # Calculate percentage
+        percentage = (prompt_tokens / context_limit) * 100 if context_limit > 0 else 0
+
+        # Update label
+        self.context_label.configure(
+            text=f"Utilisation du contexte: {prompt_tokens:,} / {context_limit:,} tokens"
+        )
+
+        # Update progress bar
+        progress_value = min(prompt_tokens / context_limit, 1.0) if context_limit > 0 else 0
+        self.context_progress.set(progress_value)
+
+        # Update percentage label with color coding
+        percentage_text = f"{percentage:.1f}%"
+        self.context_percentage.configure(text=percentage_text)
+
+        # Change color based on usage level
+        if percentage < 50:
+            color = "green"
+        elif percentage < 80:
+            color = "orange"
+        else:
+            color = "red"
+
+        self.context_percentage.configure(text_color=color)
 
     def upload_pdf(self):
         """Upload and process a PDF file"""

@@ -8,6 +8,33 @@ class OpenRouterClient:
     def __init__(self):
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
 
+        # Common model context limits (in tokens)
+        self.model_context_limits = {
+            "anthropic/claude-3.5-sonnet": 200000,
+            "anthropic/claude-3-opus": 200000,
+            "anthropic/claude-3-sonnet": 200000,
+            "anthropic/claude-3-haiku": 200000,
+            "openai/gpt-4-turbo": 128000,
+            "openai/gpt-4": 8192,
+            "openai/gpt-3.5-turbo": 16385,
+            "google/gemini-pro": 32768,
+            "google/gemini-pro-1.5": 1000000,
+            "meta-llama/llama-3.1-70b-instruct": 131072,
+            "meta-llama/llama-3.1-8b-instruct": 131072,
+        }
+
+    def get_context_limit(self, model):
+        """
+        Get the context limit for a specific model
+
+        Args:
+            model: Model name
+
+        Returns:
+            Context limit in tokens (default 8192 if unknown)
+        """
+        return self.model_context_limits.get(model, 8192)
+
     def send_message(self, message, api_key, model, context="", chat_history=None):
         """
         Send a message to OpenRouter API
@@ -20,7 +47,10 @@ class OpenRouterClient:
             chat_history: Previous chat history
 
         Returns:
-            Response from the model
+            Dictionary with:
+            - content: Response from the model
+            - usage: Token usage information (prompt_tokens, completion_tokens, total_tokens)
+            - model: Model used for the response
         """
         if chat_history is None:
             chat_history = []
@@ -76,7 +106,12 @@ class OpenRouterClient:
 
             # Extract message content
             if 'choices' in response_data and len(response_data['choices']) > 0:
-                return response_data['choices'][0]['message']['content']
+                result = {
+                    'content': response_data['choices'][0]['message']['content'],
+                    'usage': response_data.get('usage', {}),
+                    'model': response_data.get('model', model)
+                }
+                return result
             else:
                 raise Exception("Réponse API invalide: pas de choix disponible")
 
