@@ -47,11 +47,13 @@ class AILMApp:
 
         # Create tabs
         self.tab_chat = self.tabview.add("Chat")
+        self.tab_llm = self.tabview.add("LLM")
         self.tab_pdf = self.tabview.add("Base de Connaissances PDF")
         self.tab_config = self.tabview.add("Configuration")
 
         # Setup each tab
         self.setup_chat_tab()
+        self.setup_llm_tab()
         self.setup_pdf_tab()
         self.setup_config_tab()
 
@@ -243,6 +245,227 @@ class AILMApp:
 
         # Bind Enter key to send message
         self.message_input.bind("<Control-Return>", lambda e: self.send_message())
+
+    def setup_llm_tab(self):
+        """Setup the LLM monitoring tab"""
+        # Title
+        title_label = ctk.CTkLabel(
+            self.tab_llm,
+            text="Monitoring des LLMs",
+            font=("Arial", 18, "bold")
+        )
+        title_label.pack(pady=10)
+
+        # Description
+        desc_label = ctk.CTkLabel(
+            self.tab_llm,
+            text="Surveillance en temps réel de l'état et des performances de chaque modèle LLM",
+            font=("Arial", 11),
+            text_color="gray"
+        )
+        desc_label.pack(pady=(0, 10))
+
+        # Scrollable frame for LLM cards
+        self.llm_cards_frame = ctk.CTkScrollableFrame(
+            self.tab_llm,
+            label_text="Modèles Actifs"
+        )
+        self.llm_cards_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Dictionary to store LLM status widgets
+        self.llm_status_widgets = {}
+
+        # Initialize LLM cards
+        self.update_llm_cards()
+
+    def update_llm_cards(self):
+        """Update the LLM monitoring cards"""
+        # Clear existing widgets
+        for widget in self.llm_cards_frame.winfo_children():
+            widget.destroy()
+
+        self.llm_status_widgets.clear()
+
+        # Get enabled models
+        enabled_models = self.get_enabled_models()
+
+        if not enabled_models:
+            # No models enabled
+            no_models_label = ctk.CTkLabel(
+                self.llm_cards_frame,
+                text="Aucun modèle activé\n\nActivez des modèles dans l'onglet Configuration",
+                font=("Arial", 12),
+                text_color="gray"
+            )
+            no_models_label.pack(pady=50)
+            return
+
+        # Create a card for each enabled model
+        for model_name in enabled_models:
+            self.create_llm_card(model_name)
+
+    def create_llm_card(self, model_name):
+        """Create a monitoring card for a specific LLM"""
+        # Card frame
+        card_frame = ctk.CTkFrame(self.llm_cards_frame)
+        card_frame.pack(fill="x", padx=5, pady=5)
+
+        # Header frame
+        header_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+        header_frame.pack(fill="x", padx=10, pady=5)
+
+        # Model name
+        model_label = ctk.CTkLabel(
+            header_frame,
+            text=f"🤖 {model_name}",
+            font=("Arial", 13, "bold"),
+            anchor="w"
+        )
+        model_label.pack(side="left", padx=5)
+
+        # Status indicator
+        status_label = ctk.CTkLabel(
+            header_frame,
+            text="⚪ Inactif",
+            font=("Arial", 11),
+            text_color="gray"
+        )
+        status_label.pack(side="right", padx=5)
+
+        # Context usage frame
+        context_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+        context_frame.pack(fill="x", padx=10, pady=5)
+
+        context_label = ctk.CTkLabel(
+            context_frame,
+            text="Contexte: -- / --",
+            font=("Arial", 10)
+        )
+        context_label.pack(side="left", padx=5)
+
+        context_progress = ctk.CTkProgressBar(
+            context_frame,
+            width=200,
+            height=10
+        )
+        context_progress.pack(side="left", padx=5)
+        context_progress.set(0)
+
+        context_percentage = ctk.CTkLabel(
+            context_frame,
+            text="0%",
+            font=("Arial", 10)
+        )
+        context_percentage.pack(side="left", padx=5)
+
+        # Response/Error frame
+        response_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
+        response_frame.pack(fill="x", padx=10, pady=5)
+
+        response_label = ctk.CTkLabel(
+            response_frame,
+            text="Statut: En attente de requête...",
+            font=("Arial", 10),
+            text_color="gray",
+            anchor="w",
+            justify="left"
+        )
+        response_label.pack(fill="x", padx=5, pady=2)
+
+        # Timestamp
+        timestamp_label = ctk.CTkLabel(
+            card_frame,
+            text="",
+            font=("Arial", 9),
+            text_color="gray",
+            anchor="w"
+        )
+        timestamp_label.pack(fill="x", padx=15, pady=(0, 5))
+
+        # Store widgets for this model
+        self.llm_status_widgets[model_name] = {
+            "card_frame": card_frame,
+            "status_label": status_label,
+            "context_label": context_label,
+            "context_progress": context_progress,
+            "context_percentage": context_percentage,
+            "response_label": response_label,
+            "timestamp_label": timestamp_label
+        }
+
+    def update_llm_status(self, model_name, status, data=None):
+        """
+        Update the status of a specific LLM
+
+        Args:
+            model_name: Name of the model
+            status: Status string ("idle", "processing", "completed", "error")
+            data: Dictionary with optional keys:
+                - response: Response text preview
+                - error: Error message
+                - usage: Token usage dict
+                - timestamp: Timestamp string
+        """
+        if model_name not in self.llm_status_widgets:
+            return
+
+        widgets = self.llm_status_widgets[model_name]
+        data = data or {}
+
+        # Update status indicator
+        status_colors = {
+            "idle": ("⚪ Inactif", "gray"),
+            "processing": ("🟡 En cours...", "#FFA500"),
+            "completed": ("🟢 Complété", "green"),
+            "error": ("🔴 Erreur", "red")
+        }
+
+        status_text, status_color = status_colors.get(status, ("⚪ Inactif", "gray"))
+        widgets["status_label"].configure(text=status_text, text_color=status_color)
+
+        # Update context usage if available
+        if "usage" in data:
+            usage = data["usage"]
+            prompt_tokens = usage.get("prompt_tokens", 0)
+            context_limit = data.get("context_limit", 8192)
+            percentage = (prompt_tokens / context_limit) * 100 if context_limit > 0 else 0
+
+            widgets["context_label"].configure(text=f"Contexte: {prompt_tokens:,} / {context_limit:,}")
+            widgets["context_progress"].set(min(prompt_tokens / context_limit, 1.0) if context_limit > 0 else 0)
+            widgets["context_percentage"].configure(text=f"{percentage:.1f}%")
+
+            # Color code percentage
+            if percentage < 50:
+                color = "green"
+            elif percentage < 80:
+                color = "orange"
+            else:
+                color = "red"
+            widgets["context_percentage"].configure(text_color=color)
+
+        # Update response/error message
+        if "error" in data:
+            widgets["response_label"].configure(
+                text=f"Erreur: {data['error'][:200]}...",
+                text_color="red"
+            )
+        elif "response" in data:
+            preview = data["response"][:150]
+            if len(data["response"]) > 150:
+                preview += "..."
+            widgets["response_label"].configure(
+                text=f"Réponse: {preview}",
+                text_color="white"
+            )
+        elif status == "processing":
+            widgets["response_label"].configure(
+                text="Statut: Envoi de la requête au modèle...",
+                text_color="gray"
+            )
+
+        # Update timestamp
+        if "timestamp" in data:
+            widgets["timestamp_label"].configure(text=f"Dernière mise à jour: {data['timestamp']}")
 
     def setup_pdf_tab(self):
         """Setup the PDF management tab"""
