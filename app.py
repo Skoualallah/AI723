@@ -36,6 +36,9 @@ class AILMApp:
         self.response_queue = Queue()
         self.active_threads = []
 
+        # Store full responses for each model
+        self.llm_responses = {}
+
         # Create main window
         self.root = ctk.CTk()
         self.root.title("AI Chat Assistant")
@@ -331,91 +334,93 @@ class AILMApp:
             self.create_llm_card(model_name)
 
     def create_llm_card(self, model_name):
-        """Create a monitoring card for a specific LLM"""
-        # Card frame
-        card_frame = ctk.CTkFrame(self.llm_cards_frame)
-        card_frame.pack(fill="x", padx=5, pady=5)
+        """Create a compact monitoring row for a specific LLM"""
+        # Row frame - clickable
+        row_frame = ctk.CTkFrame(self.llm_cards_frame, cursor="hand2")
+        row_frame.pack(fill="x", padx=5, pady=3)
 
-        # Header frame
-        header_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
-        header_frame.pack(fill="x", padx=10, pady=5)
+        # Make the frame clickable
+        row_frame.bind("<Button-1>", lambda e: self.show_llm_response(model_name))
+
+        # Status indicator (emoji)
+        status_label = ctk.CTkLabel(
+            row_frame,
+            text="⚪",
+            font=("Arial", 16),
+            width=30
+        )
+        status_label.pack(side="left", padx=(10, 5))
+        status_label.bind("<Button-1>", lambda e: self.show_llm_response(model_name))
 
         # Model name
         model_label = ctk.CTkLabel(
-            header_frame,
-            text=f"🤖 {model_name}",
-            font=("Arial", 13, "bold"),
-            anchor="w"
+            row_frame,
+            text=model_name,
+            font=("Arial", 11, "bold"),
+            anchor="w",
+            width=250
         )
         model_label.pack(side="left", padx=5)
+        model_label.bind("<Button-1>", lambda e: self.show_llm_response(model_name))
 
-        # Status indicator
-        status_label = ctk.CTkLabel(
-            header_frame,
-            text="⚪ Inactif",
-            font=("Arial", 11),
-            text_color="gray"
+        # Answer letter
+        answer_label = ctk.CTkLabel(
+            row_frame,
+            text="?",
+            font=("Arial", 18, "bold"),
+            text_color="gray",
+            width=40
         )
-        status_label.pack(side="right", padx=5)
+        answer_label.pack(side="left", padx=5)
+        answer_label.bind("<Button-1>", lambda e: self.show_llm_response(model_name))
 
-        # Context usage frame
-        context_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
-        context_frame.pack(fill="x", padx=10, pady=5)
-
+        # Context usage compact
         context_label = ctk.CTkLabel(
-            context_frame,
-            text="Contexte: -- / --",
-            font=("Arial", 10)
+            row_frame,
+            text="--",
+            font=("Arial", 10),
+            width=60
         )
         context_label.pack(side="left", padx=5)
+        context_label.bind("<Button-1>", lambda e: self.show_llm_response(model_name))
 
+        # Mini progress bar
         context_progress = ctk.CTkProgressBar(
-            context_frame,
-            width=200,
-            height=10
+            row_frame,
+            width=80,
+            height=8
         )
         context_progress.pack(side="left", padx=5)
         context_progress.set(0)
-
-        context_percentage = ctk.CTkLabel(
-            context_frame,
-            text="0%",
-            font=("Arial", 10)
-        )
-        context_percentage.pack(side="left", padx=5)
-
-        # Response/Error frame
-        response_frame = ctk.CTkFrame(card_frame, fg_color="transparent")
-        response_frame.pack(fill="x", padx=10, pady=5)
-
-        response_label = ctk.CTkLabel(
-            response_frame,
-            text="Statut: En attente de requête...",
-            font=("Arial", 10),
-            text_color="gray",
-            anchor="w",
-            justify="left"
-        )
-        response_label.pack(fill="x", padx=5, pady=2)
+        context_progress.bind("<Button-1>", lambda e: self.show_llm_response(model_name))
 
         # Timestamp
         timestamp_label = ctk.CTkLabel(
-            card_frame,
+            row_frame,
             text="",
             font=("Arial", 9),
             text_color="gray",
-            anchor="w"
+            anchor="e",
+            width=80
         )
-        timestamp_label.pack(fill="x", padx=15, pady=(0, 5))
+        timestamp_label.pack(side="right", padx=10)
+        timestamp_label.bind("<Button-1>", lambda e: self.show_llm_response(model_name))
+
+        # Initialize response storage
+        self.llm_responses[model_name] = {
+            "content": "",
+            "error": "",
+            "answer_letter": "?"
+        }
 
         # Store widgets for this model
         self.llm_status_widgets[model_name] = {
-            "card_frame": card_frame,
+            "row_frame": row_frame,
             "status_label": status_label,
+            "model_label": model_label,
+            "answer_label": answer_label,
             "context_label": context_label,
             "context_progress": context_progress,
-            "context_percentage": context_percentage,
-            "response_label": response_label,
             "timestamp_label": timestamp_label
         }
 
@@ -431,6 +436,7 @@ class AILMApp:
                 - error: Error message
                 - usage: Token usage dict
                 - timestamp: Timestamp string
+                - answer_letter: Letter of the answer
         """
         if model_name not in self.llm_status_widgets:
             return
@@ -438,16 +444,16 @@ class AILMApp:
         widgets = self.llm_status_widgets[model_name]
         data = data or {}
 
-        # Update status indicator
-        status_colors = {
-            "idle": ("⚪ Inactif", "gray"),
-            "processing": ("🟡 En cours...", "#FFA500"),
-            "completed": ("🟢 Complété", "green"),
-            "error": ("🔴 Erreur", "red")
+        # Update status indicator (emoji only)
+        status_emojis = {
+            "idle": "⚪",
+            "processing": "🟡",
+            "completed": "🟢",
+            "error": "🔴"
         }
 
-        status_text, status_color = status_colors.get(status, ("⚪ Inactif", "gray"))
-        widgets["status_label"].configure(text=status_text, text_color=status_color)
+        emoji = status_emojis.get(status, "⚪")
+        widgets["status_label"].configure(text=emoji)
 
         # Update context usage if available
         if "usage" in data:
@@ -456,42 +462,135 @@ class AILMApp:
             context_limit = data.get("context_limit", 8192)
             percentage = (prompt_tokens / context_limit) * 100 if context_limit > 0 else 0
 
-            widgets["context_label"].configure(text=f"Contexte: {prompt_tokens:,} / {context_limit:,}")
+            widgets["context_label"].configure(text=f"{percentage:.0f}%")
             widgets["context_progress"].set(min(prompt_tokens / context_limit, 1.0) if context_limit > 0 else 0)
-            widgets["context_percentage"].configure(text=f"{percentage:.1f}%")
 
-            # Color code percentage
-            if percentage < 50:
-                color = "green"
-            elif percentage < 80:
-                color = "orange"
-            else:
-                color = "red"
-            widgets["context_percentage"].configure(text_color=color)
-
-        # Update response/error message
+        # Store response/error for popup display
         if "error" in data:
-            widgets["response_label"].configure(
-                text=f"Erreur: {data['error'][:200]}...",
-                text_color="red"
-            )
+            self.llm_responses[model_name]["error"] = data["error"]
+            self.llm_responses[model_name]["content"] = ""
         elif "response" in data:
-            preview = data["response"][:150]
-            if len(data["response"]) > 150:
-                preview += "..."
-            widgets["response_label"].configure(
-                text=f"Réponse: {preview}",
-                text_color="white"
-            )
-        elif status == "processing":
-            widgets["response_label"].configure(
-                text="Statut: Envoi de la requête au modèle...",
-                text_color="gray"
-            )
+            self.llm_responses[model_name]["content"] = data["response"]
+            self.llm_responses[model_name]["error"] = ""
+
+        # Update answer letter
+        if "answer_letter" in data:
+            answer_letter = data["answer_letter"]
+            self.llm_responses[model_name]["answer_letter"] = answer_letter
+
+            # Color based on status
+            if status == "error":
+                color = "red"
+            elif status == "completed":
+                color = "green"
+            else:
+                color = "gray"
+
+            widgets["answer_label"].configure(text=answer_letter, text_color=color)
 
         # Update timestamp
         if "timestamp" in data:
-            widgets["timestamp_label"].configure(text=f"Dernière mise à jour: {data['timestamp']}")
+            widgets["timestamp_label"].configure(text=data["timestamp"])
+
+    def show_llm_response(self, model_name):
+        """Show full response from a specific LLM in a popup window"""
+        if model_name not in self.llm_responses:
+            return
+
+        response_data = self.llm_responses[model_name]
+
+        # Create popup window
+        popup = ctk.CTkToplevel(self.root)
+        popup.title(f"Réponse - {model_name}")
+        popup.geometry("700x500")
+
+        # Header with model name and answer letter
+        header_frame = ctk.CTkFrame(popup)
+        header_frame.pack(fill="x", padx=10, pady=10)
+
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text=f"🤖 {model_name}",
+            font=("Arial", 16, "bold")
+        )
+        title_label.pack(side="left", padx=10)
+
+        answer_letter_label = ctk.CTkLabel(
+            header_frame,
+            text=f"Réponse: {response_data.get('answer_letter', '?')}",
+            font=("Arial", 18, "bold"),
+            text_color="green"
+        )
+        answer_letter_label.pack(side="right", padx=10)
+
+        # Content area
+        content_frame = ctk.CTkFrame(popup)
+        content_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+        # Display content or error
+        if response_data.get("error"):
+            # Show error
+            error_label = ctk.CTkLabel(
+                content_frame,
+                text="❌ Erreur",
+                font=("Arial", 14, "bold"),
+                text_color="red"
+            )
+            error_label.pack(pady=10)
+
+            error_text = ctk.CTkTextbox(
+                content_frame,
+                wrap="word",
+                font=("Arial", 11)
+            )
+            error_text.pack(fill="both", expand=True, padx=10, pady=10)
+            error_text.insert("1.0", response_data["error"])
+            error_text.configure(state="disabled")
+
+        elif response_data.get("content"):
+            # Show response
+            response_text = ctk.CTkTextbox(
+                content_frame,
+                wrap="word",
+                font=("Arial", 11)
+            )
+            response_text.pack(fill="both", expand=True, padx=10, pady=10)
+
+            # Format if structured output
+            if self.config.get("use_structured_output", False):
+                try:
+                    parsed = json.loads(response_data["content"])
+                    formatted = self.format_structured_response(parsed)
+                    response_text.insert("1.0", formatted)
+                except json.JSONDecodeError:
+                    response_text.insert("1.0", response_data["content"])
+            else:
+                response_text.insert("1.0", response_data["content"])
+
+            response_text.configure(state="disabled")
+
+        else:
+            # No response yet
+            no_response_label = ctk.CTkLabel(
+                content_frame,
+                text="Aucune réponse disponible\n\nEn attente de la réponse du modèle...",
+                font=("Arial", 12),
+                text_color="gray"
+            )
+            no_response_label.pack(expand=True)
+
+        # Close button
+        close_btn = ctk.CTkButton(
+            popup,
+            text="Fermer",
+            command=popup.destroy,
+            width=120,
+            height=35
+        )
+        close_btn.pack(pady=10)
+
+        # Focus on the window
+        popup.focus()
 
     def setup_pdf_tab(self):
         """Setup the PDF management tab"""
@@ -894,6 +993,15 @@ class AILMApp:
                     )
 
                 elif response["type"] == "response":
+                    # Extract answer letter if structured output
+                    answer_letter = "?"
+                    if self.config.get("use_structured_output", False):
+                        try:
+                            parsed = json.loads(response["content"])
+                            answer_letter = parsed.get("final_answer_letter", "?").strip().upper()
+                        except json.JSONDecodeError:
+                            pass
+
                     # Update LLM status with response
                     self.update_llm_status(
                         response["model"],
@@ -902,7 +1010,8 @@ class AILMApp:
                             "response": response["content"],
                             "usage": response["usage"],
                             "context_limit": response["context_limit"],
-                            "timestamp": response["timestamp"]
+                            "timestamp": response["timestamp"],
+                            "answer_letter": answer_letter
                         }
                     )
 
@@ -919,7 +1028,8 @@ class AILMApp:
                         response["status"],
                         {
                             "error": response["error"],
-                            "timestamp": response["timestamp"]
+                            "timestamp": response["timestamp"],
+                            "answer_letter": "?"
                         }
                     )
 
