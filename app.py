@@ -9,6 +9,7 @@ import uuid
 from pdf_handler import PDFHandler
 from file_handler import FileHandler
 from openrouter_client import OpenRouterClient
+from google_client import GoogleClient
 from rag_handler import RAGHandler
 
 class AILMApp:
@@ -24,6 +25,7 @@ class AILMApp:
         self.pdf_handler = PDFHandler()
         self.file_handler = FileHandler()
         self.openrouter_client = OpenRouterClient()
+        self.google_client = GoogleClient()
         self.rag_handler = RAGHandler()
 
         # Load RAG embeddings
@@ -122,7 +124,7 @@ class AILMApp:
         """Get list of enabled model names"""
         return [model["name"] for model in self.config.get("models", []) if model.get("enabled", False)]
 
-    def add_model(self, model_name, enabled=True):
+    def add_model(self, model_name, enabled=True, provider="openrouter"):
         """Add a new model to the list"""
         if "models" not in self.config:
             self.config["models"] = []
@@ -132,7 +134,11 @@ class AILMApp:
             if model["name"] == model_name:
                 return False  # Model already exists
 
-        self.config["models"].append({"name": model_name, "enabled": enabled})
+        self.config["models"].append({
+            "name": model_name,
+            "enabled": enabled,
+            "provider": provider  # "openrouter" or "google"
+        })
         self.save_config()
         return True
 
@@ -1246,26 +1252,54 @@ class AILMApp:
         )
         title_label.pack(pady=20)
 
-        # API Key section
+        # API Keys section
         api_frame = ctk.CTkFrame(self.tab_config)
         api_frame.pack(fill="x", padx=20, pady=10)
 
+        # OpenRouter API Key
         api_label = ctk.CTkLabel(
             api_frame,
-            text="Clé API OpenRouter:",
-            font=("Arial", 14)
+            text="🔑 Clé API OpenRouter:",
+            font=("Arial", 14, "bold")
         )
-        api_label.pack(pady=5)
+        api_label.pack(pady=(5, 0), anchor="w", padx=10)
 
         self.api_key_entry = ctk.CTkEntry(
             api_frame,
-            placeholder_text="Entrez votre clé API",
+            placeholder_text="Entrez votre clé API OpenRouter",
             width=400,
             show="*"
         )
         self.api_key_entry.pack(pady=5)
         if self.config.get("api_key"):
             self.api_key_entry.insert(0, self.config["api_key"])
+
+        # Google AI Studio API Key
+        google_api_label = ctk.CTkLabel(
+            api_frame,
+            text="🔑 Clé API Google AI Studio (Gemini):",
+            font=("Arial", 14, "bold")
+        )
+        google_api_label.pack(pady=(15, 0), anchor="w", padx=10)
+
+        self.google_api_key_entry = ctk.CTkEntry(
+            api_frame,
+            placeholder_text="Entrez votre clé API Google AI Studio",
+            width=400,
+            show="*"
+        )
+        self.google_api_key_entry.pack(pady=5)
+        if self.config.get("google_api_key"):
+            self.google_api_key_entry.insert(0, self.config["google_api_key"])
+
+        # API info
+        api_info_label = ctk.CTkLabel(
+            api_frame,
+            text="💡 OpenRouter pour Claude, GPT, etc. | Google AI Studio pour les modèles Gemini",
+            font=("Arial", 10),
+            text_color="gray"
+        )
+        api_info_label.pack(pady=(5, 10))
 
         # Models section
         models_frame = ctk.CTkFrame(self.tab_config)
@@ -1305,10 +1339,20 @@ class AILMApp:
         )
         add_label.pack(side="left", padx=5)
 
+        # Provider dropdown
+        self.provider_dropdown = ctk.CTkComboBox(
+            add_model_frame,
+            values=["OpenRouter", "Google AI"],
+            width=130,
+            state="readonly"
+        )
+        self.provider_dropdown.set("OpenRouter")
+        self.provider_dropdown.pack(side="left", padx=5)
+
         self.new_model_entry = ctk.CTkEntry(
             add_model_frame,
             placeholder_text="Ex: anthropic/claude-3.5-sonnet",
-            width=300
+            width=250
         )
         self.new_model_entry.pack(side="left", padx=5)
 
@@ -1324,7 +1368,7 @@ class AILMApp:
         # Examples label
         examples_label = ctk.CTkLabel(
             models_frame,
-            text="Exemples: anthropic/claude-3.5-sonnet, openai/gpt-4-turbo, google/gemini-pro",
+            text="OpenRouter: anthropic/claude-3.5-sonnet, openai/gpt-4-turbo | Google AI: gemini-1.5-pro, gemini-1.5-flash",
             font=("Arial", 9),
             text_color="gray"
         )
@@ -1389,7 +1433,7 @@ class AILMApp:
         )
         self.config_status_label.pack(pady=5)
 
-    def llm_worker(self, model_name, message, context, api_key, use_structured_output):
+    def llm_worker(self, model_name, message, context, api_key, use_structured_output, provider="openrouter", google_api_key=None):
         """
         Worker thread function to send a request to a single LLM
 
@@ -1399,6 +1443,8 @@ class AILMApp:
             context: Context from RAG/PDFs
             api_key: OpenRouter API key
             use_structured_output: Whether to use structured output
+            provider: Provider type ("openrouter" or "google")
+            google_api_key: Google AI Studio API key (if provider is "google")
         """
         try:
             # Update status to processing
@@ -1409,21 +1455,45 @@ class AILMApp:
                 "timestamp": datetime.now().strftime("%H:%M:%S")
             })
 
-            # Send request
-            result = self.openrouter_client.send_message(
-                message,
-                api_key,
-                model_name,
-                context,
-                self.chat_history,
-                use_structured_output=use_structured_output
-            )
+            # Send request based on provider
+            if provider == "google":
+                # Use Google AI client
+                if not google_api_key:
+                    raise Exception("Clé API Google manquante")
 
-            # Get context limit
-            context_limit = self.openrouter_client.get_context_limit(
-                model_name,
-                api_key
-            )
+                # Configure Google client if not already configured
+                if not self.google_client.configured:
+                    self.google_client.configure(google_api_key)
+
+                # Prepare system prompt with context
+                system_prompt = None
+                if context:
+                    system_prompt = f"Contexte:\n{context}"
+
+                result = self.google_client.send_message(
+                    model_name,
+                    message,
+                    system_prompt=system_prompt,
+                    use_structured_output=use_structured_output
+                )
+
+                context_limit = result.get('context_length', 32768)
+            else:
+                # Use OpenRouter client
+                result = self.openrouter_client.send_message(
+                    message,
+                    api_key,
+                    model_name,
+                    context,
+                    self.chat_history,
+                    use_structured_output=use_structured_output
+                )
+
+                # Get context limit
+                context_limit = self.openrouter_client.get_context_limit(
+                    model_name,
+                    api_key
+                )
 
             # Send success response
             self.response_queue.put({
@@ -1433,7 +1503,8 @@ class AILMApp:
                 "content": result['content'],
                 "usage": result.get('usage', {}),
                 "context_limit": context_limit,
-                "timestamp": datetime.now().strftime("%H:%M:%S")
+                "timestamp": datetime.now().strftime("%H:%M:%S"),
+                "provider": provider
             })
 
         except Exception as e:
@@ -1728,15 +1799,23 @@ class AILMApp:
 
         # Start worker threads for each enabled model
         self.active_threads = []
-        for model_name in enabled_models:
+        for model_data in self.config.get("models", []):
+            if not model_data.get("enabled", False):
+                continue
+
+            model_name = model_data["name"]
+            provider = model_data.get("provider", "openrouter")
+
             thread = threading.Thread(
                 target=self.llm_worker,
                 args=(
                     model_name,
                     message,
                     context,
-                    self.config["api_key"],
-                    self.config.get("use_structured_output", False)
+                    self.config.get("api_key", ""),
+                    self.config.get("use_structured_output", False),
+                    provider,
+                    self.config.get("google_api_key", "")
                 ),
                 daemon=True
             )
@@ -2424,10 +2503,15 @@ class AILMApp:
             model_row = ctk.CTkFrame(self.models_list_frame)
             model_row.pack(fill="x", padx=5, pady=5)
 
-            # Model name
+            # Get provider (default to openrouter for backward compatibility)
+            provider = model.get("provider", "openrouter")
+            provider_icon = "🔷" if provider == "google" else "🔶"
+            provider_name = "Google AI" if provider == "google" else "OpenRouter"
+
+            # Model name with provider badge
             name_label = ctk.CTkLabel(
                 model_row,
-                text=f"🤖 {model['name']}",
+                text=f"{provider_icon} {model['name']} ({provider_name})",
                 font=("Arial", 11),
                 anchor="w"
             )
@@ -2464,8 +2548,12 @@ class AILMApp:
             messagebox.showerror("Erreur", "Veuillez entrer un nom de modèle")
             return
 
+        # Get selected provider
+        provider_display = self.provider_dropdown.get()
+        provider = "google" if provider_display == "Google AI" else "openrouter"
+
         # Add the model
-        if self.add_model(model_name, enabled=True):
+        if self.add_model(model_name, enabled=True, provider=provider):
             # Clear input
             self.new_model_entry.delete(0, "end")
 
@@ -2473,7 +2561,8 @@ class AILMApp:
             self.update_models_list()
             self.update_llm_cards()
 
-            messagebox.showinfo("Succès", f"Modèle '{model_name}' ajouté avec succès!")
+            provider_name = "Google AI" if provider == "google" else "OpenRouter"
+            messagebox.showinfo("Succès", f"Modèle '{model_name}' ({provider_name}) ajouté avec succès!")
         else:
             messagebox.showerror("Erreur", f"Le modèle '{model_name}' existe déjà")
 
@@ -2506,12 +2595,24 @@ class AILMApp:
     def save_configuration(self):
         """Save the configuration"""
         api_key = self.api_key_entry.get().strip()
+        google_api_key = self.google_api_key_entry.get().strip()
 
-        if not api_key:
-            messagebox.showerror("Erreur", "Veuillez entrer une clé API")
+        # At least one API key must be provided
+        if not api_key and not google_api_key:
+            messagebox.showerror("Erreur", "Veuillez entrer au moins une clé API (OpenRouter ou Google)")
             return
 
+        # Save API keys
         self.config["api_key"] = api_key
+        self.config["google_api_key"] = google_api_key
+
+        # Configure clients if keys are provided
+        if google_api_key:
+            try:
+                self.google_client.configure(google_api_key)
+            except Exception as e:
+                messagebox.showwarning("Avertissement", f"Erreur lors de la configuration de Google AI: {str(e)}")
+
         self.save_config()
 
         self.config_status_label.configure(
