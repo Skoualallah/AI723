@@ -46,6 +46,9 @@ class AILMApp:
         self.current_conversation_messages = []
         self.conversations_history = self.load_conversations_history()
 
+        # Histogram management (for real-time display)
+        self.answer_counts = {}
+
         # Create main window
         self.root = ctk.CTk()
         self.root.title("AI Chat Assistant")
@@ -1476,14 +1479,20 @@ class AILMApp:
                             "error": None
                         }
 
+                        # Update histogram for this specific message
+                        if answer_letter and answer_letter != "?":
+                            if answer_letter not in self.current_message_data["histogram"]:
+                                self.current_message_data["histogram"][answer_letter] = 0
+                            self.current_message_data["histogram"][answer_letter] += 1
+
                         # Check if all responses received
                         if len(self.current_message_data["responses"]) == self.current_message_data["expected_count"]:
-                            # Save message to history
+                            # Save message to history with its specific histogram
                             self.save_current_message(
                                 self.current_message_data["user_message"],
                                 self.current_message_data["context"],
                                 list(self.current_message_data["responses"].values()),
-                                dict(self.answer_counts)
+                                dict(self.current_message_data["histogram"])
                             )
                             # Update history list
                             self.update_history_list()
@@ -1517,12 +1526,12 @@ class AILMApp:
 
                         # Check if all responses received (including errors)
                         if len(self.current_message_data["responses"]) == self.current_message_data["expected_count"]:
-                            # Save message to history
+                            # Save message to history with its specific histogram
                             self.save_current_message(
                                 self.current_message_data["user_message"],
                                 self.current_message_data["context"],
                                 list(self.current_message_data["responses"].values()),
-                                dict(self.answer_counts)
+                                dict(self.current_message_data["histogram"])
                             )
                             # Update history list
                             self.update_history_list()
@@ -1696,6 +1705,7 @@ class AILMApp:
             "user_message": message,
             "context": context,
             "responses": {},
+            "histogram": {},  # Histogramme spécifique à cette question
             "expected_count": len(enabled_models)
         }
 
