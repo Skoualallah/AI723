@@ -204,6 +204,9 @@ class AILMApp:
         }
         self.current_conversation_messages.append(message_data)
 
+        # Sauvegarder automatiquement après chaque message
+        self.auto_save_conversation()
+
     def save_conversation(self):
         """Save the current conversation to history"""
         if not self.current_conversation_messages:
@@ -219,11 +222,39 @@ class AILMApp:
         self.conversations_history["conversations"].insert(0, conversation)
         self.save_conversations_history()
 
+    def auto_save_conversation(self):
+        """Automatically save/update the current conversation after each message"""
+        if not self.current_conversation_messages:
+            return
+
+        # Look for existing conversation with this ID
+        existing_index = None
+        for i, conv in enumerate(self.conversations_history["conversations"]):
+            if conv["id"] == self.current_conversation_id:
+                existing_index = i
+                break
+
+        conversation = {
+            "id": self.current_conversation_id,
+            "start_timestamp": self.current_conversation_messages[0]["timestamp"],
+            "messages": self.current_conversation_messages
+        }
+
+        if existing_index is not None:
+            # Update existing conversation
+            self.conversations_history["conversations"][existing_index] = conversation
+        else:
+            # Create new conversation at the beginning
+            self.conversations_history["conversations"].insert(0, conversation)
+
+        # Save to file and update UI
+        self.save_conversations_history()
+        self.update_history_list()
+
     def new_conversation(self):
         """Start a new conversation"""
-        # Save current conversation if it has messages
-        if self.current_conversation_messages:
-            self.save_conversation()
+        # Current conversation is already auto-saved, no need to save again
+        # (it's saved automatically after each message via auto_save_conversation)
 
         # Reset for new conversation
         self.current_conversation_id = self.generate_conversation_id()
