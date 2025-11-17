@@ -1552,7 +1552,7 @@ class AILMApp:
 
         # Show or hide histogram based on structured output setting
         if self.config.get("use_structured_output", False):
-            self.histogram_frame.pack(fill="x", padx=10, pady=(10, 0), after=self.tab_chat.winfo_children()[0])
+            self.histogram_frame.pack(fill="x", padx=10, pady=(10, 0), before=self.chat_display)
         else:
             self.histogram_frame.pack_forget()
 
