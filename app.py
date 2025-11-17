@@ -11,6 +11,7 @@ from file_handler import FileHandler
 from openrouter_client import OpenRouterClient
 from google_client import GoogleClient
 from rag_handler import RAGHandler
+from json_utils import extract_json_from_text, extract_answer_letter_from_json
 
 class AILMApp:
     def __init__(self):
@@ -652,11 +653,13 @@ class AILMApp:
 
             # Format if structured output
             if self.config.get("use_structured_output", False):
-                try:
-                    parsed = json.loads(response_data["content"])
+                # Use robust JSON extraction
+                parsed = extract_json_from_text(response_data["content"])
+                if parsed:
                     formatted = self.format_structured_response(parsed)
                     response_text.insert("1.0", formatted)
-                except json.JSONDecodeError:
+                else:
+                    # If JSON extraction failed, show raw content
                     response_text.insert("1.0", response_data["content"])
             else:
                 response_text.insert("1.0", response_data["content"])
@@ -1543,11 +1546,12 @@ class AILMApp:
                     # Extract answer letter if structured output
                     answer_letter = "?"
                     if self.config.get("use_structured_output", False):
-                        try:
-                            parsed = json.loads(response["content"])
-                            answer_letter = parsed.get("final_answer_letter", "?").strip().upper()
-                        except json.JSONDecodeError:
-                            pass
+                        # Use robust JSON extraction that works even with surrounding text
+                        parsed = extract_json_from_text(response["content"])
+                        if parsed:
+                            answer_letter = extract_answer_letter_from_json(parsed)
+                        else:
+                            answer_letter = "?"
 
                     # Update LLM status with response
                     self.update_llm_status(
@@ -1644,17 +1648,18 @@ class AILMApp:
         """Add LLM response to chat display"""
         # Parse and format if structured output
         if self.config.get("use_structured_output", False):
-            try:
-                parsed_response = json.loads(content)
+            # Use robust JSON extraction
+            parsed_response = extract_json_from_text(content)
+            if parsed_response:
                 formatted_response = self.format_structured_response(parsed_response)
                 display_content = formatted_response
 
                 # Update histogram if final_answer_letter is present
-                answer_letter = parsed_response.get("final_answer_letter", "").strip().upper()
-                if answer_letter:
+                answer_letter = extract_answer_letter_from_json(parsed_response)
+                if answer_letter and answer_letter != '?':
                     self.update_histogram(answer_letter)
-
-            except json.JSONDecodeError:
+            else:
+                # If JSON extraction failed, show raw content
                 display_content = content
         else:
             display_content = content

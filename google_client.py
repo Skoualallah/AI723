@@ -1,5 +1,6 @@
 import google.generativeai as genai
 import json
+from json_utils import extract_json_from_text, extract_answer_letter_from_json
 
 
 class GoogleClient:
@@ -66,16 +67,11 @@ class GoogleClient:
             # Parse structured output if requested
             answer_letter = None
             if use_structured_output:
-                try:
-                    # Try to extract JSON from response
-                    json_start = response_text.find('{')
-                    json_end = response_text.rfind('}') + 1
-                    if json_start != -1 and json_end > json_start:
-                        json_str = response_text[json_start:json_end]
-                        parsed_json = json.loads(json_str)
-                        answer_letter = parsed_json.get('final_answer_letter', '?')
-                except (json.JSONDecodeError, ValueError):
-                    # If parsing fails, try to extract letter from text
+                # Use robust JSON extraction that works even with surrounding text
+                parsed_json = extract_json_from_text(response_text)
+                if parsed_json:
+                    answer_letter = extract_answer_letter_from_json(parsed_json)
+                else:
                     answer_letter = '?'
 
             # Calculate usage statistics
