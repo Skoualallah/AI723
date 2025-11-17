@@ -1059,16 +1059,20 @@ class AILMApp:
 
     def setup_pdf_tab(self):
         """Setup the PDF management tab"""
+        # Create a scrollable frame for the entire PDF tab
+        pdf_scrollable = ctk.CTkScrollableFrame(self.tab_pdf)
+        pdf_scrollable.pack(fill="both", expand=True, padx=5, pady=5)
+
         # Title
         title_label = ctk.CTkLabel(
-            self.tab_pdf,
-            text="Gestion de la Base de Connaissances PDF",
+            pdf_scrollable,
+            text="Gestion de la Base de Connaissances",
             font=("Arial", 18, "bold")
         )
         title_label.pack(pady=10)
 
         # RAG toggle frame
-        rag_frame = ctk.CTkFrame(self.tab_pdf)
+        rag_frame = ctk.CTkFrame(pdf_scrollable)
         rag_frame.pack(fill="x", padx=20, pady=10)
 
         # RAG label
@@ -1102,16 +1106,16 @@ class AILMApp:
 
         # RAG description
         rag_desc = ctk.CTkLabel(
-            self.tab_pdf,
+            pdf_scrollable,
             text="Le mode RAG utilise la recherche sémantique pour trouver les passages pertinents.\n"
-                 "Recommandé pour les PDFs volumineux (>100 pages).",
+                 "Recommandé pour les documents volumineux (>100 pages).",
             font=("Arial", 10),
             text_color="gray"
         )
         rag_desc.pack(pady=(0, 10))
 
         # RAG Parameters frame
-        rag_params_frame = ctk.CTkFrame(self.tab_pdf)
+        rag_params_frame = ctk.CTkFrame(pdf_scrollable)
         rag_params_frame.pack(fill="x", padx=20, pady=10)
 
         # Title for parameters
@@ -1206,7 +1210,7 @@ class AILMApp:
 
         # Upload button
         upload_btn = ctk.CTkButton(
-            self.tab_pdf,
+            pdf_scrollable,
             text="📁 Ajouter un Fichier",
             command=self.upload_document,
             width=200,
@@ -1216,7 +1220,7 @@ class AILMApp:
 
         # Supported formats info
         formats_label = ctk.CTkLabel(
-            self.tab_pdf,
+            pdf_scrollable,
             text="Formats supportés: TXT, MD, PDF, Python, JavaScript, JSON, CSV, XML, HTML, CSS, et plus...",
             font=("Arial", 10),
             text_color="gray"
@@ -1224,8 +1228,8 @@ class AILMApp:
         formats_label.pack(pady=(0, 5))
 
         # Document list frame
-        list_frame = ctk.CTkFrame(self.tab_pdf)
-        list_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        list_frame = ctk.CTkFrame(pdf_scrollable)
+        list_frame.pack(fill="x", padx=10, pady=10)
 
         # List label
         list_label = ctk.CTkLabel(
@@ -1236,7 +1240,7 @@ class AILMApp:
         list_label.pack(pady=5)
 
         # Scrollable frame for PDF list
-        self.pdf_list_frame = ctk.CTkScrollableFrame(list_frame)
+        self.pdf_list_frame = ctk.CTkScrollableFrame(list_frame, height=200)
         self.pdf_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
         # Update PDF list display
@@ -1244,16 +1248,20 @@ class AILMApp:
 
     def setup_config_tab(self):
         """Setup the configuration tab"""
+        # Create a scrollable frame for the entire config tab
+        config_scrollable = ctk.CTkScrollableFrame(self.tab_config)
+        config_scrollable.pack(fill="both", expand=True, padx=5, pady=5)
+
         # Title
         title_label = ctk.CTkLabel(
-            self.tab_config,
+            config_scrollable,
             text="Configuration OpenRouter",
             font=("Arial", 18, "bold")
         )
         title_label.pack(pady=20)
 
         # API Keys section
-        api_frame = ctk.CTkFrame(self.tab_config)
+        api_frame = ctk.CTkFrame(config_scrollable)
         api_frame.pack(fill="x", padx=20, pady=10)
 
         # OpenRouter API Key
@@ -1302,8 +1310,8 @@ class AILMApp:
         api_info_label.pack(pady=(5, 10))
 
         # Models section
-        models_frame = ctk.CTkFrame(self.tab_config)
-        models_frame.pack(fill="both", expand=True, padx=20, pady=10)
+        models_frame = ctk.CTkFrame(config_scrollable)
+        models_frame.pack(fill="x", padx=20, pady=10)
 
         models_label = ctk.CTkLabel(
             models_frame,
@@ -1324,7 +1332,7 @@ class AILMApp:
         # Scrollable frame for models list
         self.models_list_frame = ctk.CTkScrollableFrame(
             models_frame,
-            height=200
+            height=150
         )
         self.models_list_frame.pack(fill="both", expand=True, padx=5, pady=5)
 
@@ -1378,7 +1386,7 @@ class AILMApp:
         self.update_models_list()
 
         # Structured Output section
-        structured_frame = ctk.CTkFrame(self.tab_config)
+        structured_frame = ctk.CTkFrame(config_scrollable)
         structured_frame.pack(fill="x", padx=20, pady=10)
 
         structured_label = ctk.CTkLabel(
@@ -1417,7 +1425,7 @@ class AILMApp:
 
         # Save button
         save_btn = ctk.CTkButton(
-            self.tab_config,
+            config_scrollable,
             text="Sauvegarder la Configuration",
             command=self.save_configuration,
             width=200,
@@ -1427,7 +1435,7 @@ class AILMApp:
 
         # Status label
         self.config_status_label = ctk.CTkLabel(
-            self.tab_config,
+            config_scrollable,
             text="",
             font=("Arial", 12)
         )
