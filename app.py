@@ -243,51 +243,22 @@ class AILMApp:
         # Reset histogram
         self.reset_histogram()
 
+        # Reset LLM statuses to idle and clear responses
+        for model_name in self.get_enabled_models():
+            if model_name in self.llm_status_widgets:
+                self.update_llm_status(model_name, "idle", {"answer_letter": "?"})
+            if model_name in self.llm_responses:
+                self.llm_responses[model_name] = {
+                    "content": "",
+                    "error": "",
+                    "answer_letter": "?"
+                }
+
         # Update history tab
         self.update_history_list()
 
     def setup_chat_tab(self):
         """Setup the chat interface tab"""
-        # Context usage frame
-        context_frame = ctk.CTkFrame(self.tab_chat)
-        context_frame.pack(fill="x", padx=10, pady=(10, 0))
-
-        # Context usage label
-        self.context_label = ctk.CTkLabel(
-            context_frame,
-            text="Utilisation du contexte: -- / --",
-            font=("Arial", 11)
-        )
-        self.context_label.pack(side="left", padx=10, pady=5)
-
-        # Context usage progress bar
-        self.context_progress = ctk.CTkProgressBar(
-            context_frame,
-            width=300,
-            height=15
-        )
-        self.context_progress.pack(side="left", padx=10, pady=5)
-        self.context_progress.set(0)
-
-        # Percentage label
-        self.context_percentage = ctk.CTkLabel(
-            context_frame,
-            text="0%",
-            font=("Arial", 11, "bold")
-        )
-        self.context_percentage.pack(side="left", padx=5, pady=5)
-
-        # View context button
-        self.view_context_button = ctk.CTkButton(
-            context_frame,
-            text="Voir Contexte",
-            command=self.show_context_window,
-            width=120,
-            height=30,
-            fg_color="#2B5278"
-        )
-        self.view_context_button.pack(side="right", padx=10, pady=5)
-
         # Answer histogram frame (for structured output)
         self.histogram_frame = ctk.CTkFrame(self.tab_chat)
         self.histogram_frame.pack(fill="x", padx=10, pady=(10, 0))
