@@ -5,6 +5,7 @@ import os
 from datetime import datetime
 import threading
 from queue import Queue
+import uuid
 from pdf_handler import PDFHandler
 from openrouter_client import OpenRouterClient
 from rag_handler import RAGHandler
@@ -14,6 +15,7 @@ class AILMApp:
         # Configuration
         self.config_file = "config.json"
         self.pdf_data_file = "pdf_knowledge_base.json"
+        self.conversations_file = "conversations_history.json"
         self.config = self.load_config()
         self.pdf_knowledge = self.load_pdf_knowledge()
 
@@ -39,6 +41,11 @@ class AILMApp:
         # Store full responses for each model
         self.llm_responses = {}
 
+        # Conversation management
+        self.current_conversation_id = self.generate_conversation_id()
+        self.current_conversation_messages = []
+        self.conversations_history = self.load_conversations_history()
+
         # Create main window
         self.root = ctk.CTk()
         self.root.title("AI Chat Assistant")
@@ -55,12 +62,14 @@ class AILMApp:
         # Create tabs
         self.tab_chat = self.tabview.add("Chat")
         self.tab_llm = self.tabview.add("LLM")
+        self.tab_history = self.tabview.add("Historique")
         self.tab_pdf = self.tabview.add("Base de Connaissances PDF")
         self.tab_config = self.tabview.add("Configuration")
 
         # Setup each tab
         self.setup_chat_tab()
         self.setup_llm_tab()
+        self.setup_history_tab()
         self.setup_pdf_tab()
         self.setup_config_tab()
 
@@ -162,6 +171,78 @@ class AILMApp:
         with open(self.pdf_data_file, 'w', encoding='utf-8') as f:
             json.dump(self.pdf_knowledge, f, indent=2, ensure_ascii=False)
 
+    def generate_conversation_id(self):
+        """Generate a unique conversation ID"""
+        return str(uuid.uuid4())
+
+    def load_conversations_history(self):
+        """Load conversations history from file"""
+        if os.path.exists(self.conversations_file):
+            try:
+                with open(self.conversations_file, 'r', encoding='utf-8') as f:
+                    return json.load(f)
+            except:
+                pass
+        return {"conversations": []}
+
+    def save_conversations_history(self):
+        """Save conversations history to file"""
+        with open(self.conversations_file, 'w', encoding='utf-8') as f:
+            json.dump(self.conversations_history, f, indent=2, ensure_ascii=False)
+
+    def save_current_message(self, user_message, context, responses, histogram):
+        """Save the current message to the conversation history"""
+        message_data = {
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "user_message": user_message,
+            "context": context,
+            "responses": responses,
+            "histogram": histogram
+        }
+        self.current_conversation_messages.append(message_data)
+
+    def save_conversation(self):
+        """Save the current conversation to history"""
+        if not self.current_conversation_messages:
+            return
+
+        conversation = {
+            "id": self.current_conversation_id,
+            "start_timestamp": self.current_conversation_messages[0]["timestamp"],
+            "messages": self.current_conversation_messages
+        }
+
+        # Add to history
+        self.conversations_history["conversations"].insert(0, conversation)
+        self.save_conversations_history()
+
+    def new_conversation(self):
+        """Start a new conversation"""
+        # Save current conversation if it has messages
+        if self.current_conversation_messages:
+            self.save_conversation()
+
+        # Reset for new conversation
+        self.current_conversation_id = self.generate_conversation_id()
+        self.current_conversation_messages = []
+        self.chat_history = []
+        self.answer_counts = {}
+
+        # Clear chat display
+        self.chat_display.configure(state="normal")
+        self.chat_display.delete("1.0", "end")
+        self.chat_display.configure(state="disabled")
+
+        # Reset context
+        self.last_sent_context = ""
+        self.update_context_window_if_open()
+
+        # Reset histogram
+        self.reset_histogram()
+
+        # Update history tab
+        self.update_history_list()
+
     def setup_chat_tab(self):
         """Setup the chat interface tab"""
         # Context usage frame
@@ -261,16 +342,16 @@ class AILMApp:
         )
         self.send_button.pack(pady=(0, 5))
 
-        # Clear chat button
-        self.clear_button = ctk.CTkButton(
+        # New conversation button
+        self.new_conv_button = ctk.CTkButton(
             button_frame,
-            text="Effacer",
-            command=self.clear_chat,
+            text="Nouvelle\nConversation",
+            command=self.new_conversation,
             width=100,
-            height=30,
-            fg_color="gray"
+            height=35,
+            fg_color="#2B7A78"
         )
-        self.clear_button.pack()
+        self.new_conv_button.pack()
 
         # Bind Enter key to send message
         self.message_input.bind("<Control-Return>", lambda e: self.send_message())
@@ -590,6 +671,377 @@ class AILMApp:
         close_btn.pack(pady=10)
 
         # Focus on the window
+        popup.focus()
+
+    def setup_history_tab(self):
+        """Setup the history tab"""
+        # Title
+        title_label = ctk.CTkLabel(
+            self.tab_history,
+            text="Historique des Conversations",
+            font=("Arial", 18, "bold")
+        )
+        title_label.pack(pady=10)
+
+        # Controls frame
+        controls_frame = ctk.CTkFrame(self.tab_history, fg_color="transparent")
+        controls_frame.pack(fill="x", padx=20, pady=(0, 10))
+
+        # Delete all button
+        delete_all_btn = ctk.CTkButton(
+            controls_frame,
+            text="Tout Supprimer",
+            command=self.delete_all_conversations,
+            width=150,
+            height=35,
+            fg_color="red"
+        )
+        delete_all_btn.pack(side="right", padx=5)
+
+        # Conversations list
+        self.history_list_frame = ctk.CTkScrollableFrame(
+            self.tab_history,
+            label_text="Conversations"
+        )
+        self.history_list_frame.pack(fill="both", expand=True, padx=10, pady=10)
+
+        # Initialize history list
+        self.update_history_list()
+
+    def update_history_list(self):
+        """Update the conversations history list"""
+        # Clear existing widgets
+        for widget in self.history_list_frame.winfo_children():
+            widget.destroy()
+
+        conversations = self.conversations_history.get("conversations", [])
+
+        if not conversations:
+            # No conversations
+            no_conv_label = ctk.CTkLabel(
+                self.history_list_frame,
+                text="Aucune conversation enregistrée\n\nCommencez à discuter dans l'onglet Chat",
+                font=("Arial", 12),
+                text_color="gray"
+            )
+            no_conv_label.pack(pady=50)
+            return
+
+        # Create a row for each conversation
+        for conv in conversations:
+            conv_frame = ctk.CTkFrame(self.history_list_frame, cursor="hand2")
+            conv_frame.pack(fill="x", padx=5, pady=5)
+
+            # Make clickable
+            conv_frame.bind("<Button-1>", lambda e, c=conv: self.show_conversation_detail(c))
+
+            # Info frame
+            info_frame = ctk.CTkFrame(conv_frame, fg_color="transparent")
+            info_frame.pack(fill="x", padx=10, pady=5)
+
+            # Timestamp
+            timestamp_label = ctk.CTkLabel(
+                info_frame,
+                text=f"📅 {conv['start_timestamp']}",
+                font=("Arial", 11, "bold"),
+                anchor="w"
+            )
+            timestamp_label.pack(side="left", padx=5)
+            timestamp_label.bind("<Button-1>", lambda e, c=conv: self.show_conversation_detail(c))
+
+            # Message count
+            msg_count = len(conv.get("messages", []))
+            count_label = ctk.CTkLabel(
+                info_frame,
+                text=f"{msg_count} message{'s' if msg_count > 1 else ''}",
+                font=("Arial", 10),
+                text_color="gray"
+            )
+            count_label.pack(side="left", padx=10)
+            count_label.bind("<Button-1>", lambda e, c=conv: self.show_conversation_detail(c))
+
+            # First message preview
+            if conv.get("messages"):
+                first_msg = conv["messages"][0]["user_message"]
+                preview = first_msg[:80] + "..." if len(first_msg) > 80 else first_msg
+
+                preview_label = ctk.CTkLabel(
+                    conv_frame,
+                    text=preview,
+                    font=("Arial", 10),
+                    text_color="lightgray",
+                    anchor="w"
+                )
+                preview_label.pack(fill="x", padx=15, pady=(0, 5))
+                preview_label.bind("<Button-1>", lambda e, c=conv: self.show_conversation_detail(c))
+
+    def delete_all_conversations(self):
+        """Delete all conversations from history"""
+        if messagebox.askyesno("Confirmation", "Voulez-vous vraiment supprimer tout l'historique?"):
+            self.conversations_history = {"conversations": []}
+            self.save_conversations_history()
+            self.update_history_list()
+            messagebox.showinfo("Succès", "Tout l'historique a été supprimé")
+
+    def show_conversation_detail(self, conversation):
+        """Show detailed view of a conversation in a popup"""
+        # Create popup window
+        popup = ctk.CTkToplevel(self.root)
+        popup.title(f"Conversation - {conversation['start_timestamp']}")
+        popup.geometry("900x700")
+
+        # Header
+        header_frame = ctk.CTkFrame(popup)
+        header_frame.pack(fill="x", padx=10, pady=10)
+
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text=f"💬 Conversation du {conversation['start_timestamp']}",
+            font=("Arial", 16, "bold")
+        )
+        title_label.pack(side="left", padx=10)
+
+        # Scrollable content
+        content_frame = ctk.CTkScrollableFrame(popup)
+        content_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+        # Display each message
+        for i, msg in enumerate(conversation.get("messages", [])):
+            # Message container
+            msg_frame = ctk.CTkFrame(content_frame)
+            msg_frame.pack(fill="x", padx=5, pady=10)
+
+            # Message header
+            msg_header = ctk.CTkFrame(msg_frame, fg_color="transparent")
+            msg_header.pack(fill="x", padx=10, pady=5)
+
+            msg_time = ctk.CTkLabel(
+                msg_header,
+                text=f"⏱️ {msg['timestamp']}",
+                font=("Arial", 11, "bold")
+            )
+            msg_time.pack(side="left", padx=5)
+
+            # View context button
+            context_btn = ctk.CTkButton(
+                msg_header,
+                text="Voir Contexte",
+                command=lambda ctx=msg['context']: self.show_context_popup(ctx),
+                width=120,
+                height=25,
+                fg_color="#2B5278"
+            )
+            context_btn.pack(side="right", padx=5)
+
+            # User question
+            question_label = ctk.CTkLabel(
+                msg_frame,
+                text="❓ Question:",
+                font=("Arial", 11, "bold")
+            )
+            question_label.pack(anchor="w", padx=10, pady=(5, 0))
+
+            question_text = ctk.CTkTextbox(
+                msg_frame,
+                height=60,
+                font=("Arial", 11)
+            )
+            question_text.pack(fill="x", padx=10, pady=5)
+            question_text.insert("1.0", msg['user_message'])
+            question_text.configure(state="disabled")
+
+            # Histogram if available
+            if msg.get("histogram"):
+                hist_frame = ctk.CTkFrame(msg_frame, fg_color="transparent")
+                hist_frame.pack(fill="x", padx=10, pady=5)
+
+                hist_label = ctk.CTkLabel(
+                    hist_frame,
+                    text="📊 Distribution globale:",
+                    font=("Arial", 11, "bold")
+                )
+                hist_label.pack(side="left", padx=5)
+
+                for letter, count in sorted(msg["histogram"].items()):
+                    letter_count = ctk.CTkLabel(
+                        hist_frame,
+                        text=f"{letter}: {count}",
+                        font=("Arial", 12, "bold"),
+                        text_color="green"
+                    )
+                    letter_count.pack(side="left", padx=10)
+
+            # Responses
+            responses_label = ctk.CTkLabel(
+                msg_frame,
+                text="🤖 Réponses des LLMs:",
+                font=("Arial", 11, "bold")
+            )
+            responses_label.pack(anchor="w", padx=10, pady=(10, 5))
+
+            for resp in msg.get("responses", []):
+                # Response row
+                resp_row = ctk.CTkFrame(msg_frame, cursor="hand2")
+                resp_row.pack(fill="x", padx=15, pady=3)
+
+                # Make clickable to view full response
+                resp_row.bind("<Button-1>", lambda e, r=resp: self.show_response_popup(r))
+
+                # Model name
+                model_label = ctk.CTkLabel(
+                    resp_row,
+                    text=f"• {resp['model']}",
+                    font=("Arial", 10, "bold"),
+                    anchor="w",
+                    width=300
+                )
+                model_label.pack(side="left", padx=5)
+                model_label.bind("<Button-1>", lambda e, r=resp: self.show_response_popup(r))
+
+                # Answer letter
+                if resp.get("answer_letter"):
+                    answer_label = ctk.CTkLabel(
+                        resp_row,
+                        text=resp["answer_letter"],
+                        font=("Arial", 14, "bold"),
+                        text_color="green" if not resp.get("error") else "red",
+                        width=30
+                    )
+                    answer_label.pack(side="left", padx=5)
+                    answer_label.bind("<Button-1>", lambda e, r=resp: self.show_response_popup(r))
+
+                # Status
+                if resp.get("error"):
+                    status_label = ctk.CTkLabel(
+                        resp_row,
+                        text="❌ Erreur",
+                        font=("Arial", 9),
+                        text_color="red"
+                    )
+                    status_label.pack(side="left", padx=5)
+                    status_label.bind("<Button-1>", lambda e, r=resp: self.show_response_popup(r))
+
+            # Separator between messages
+            if i < len(conversation["messages"]) - 1:
+                separator = ctk.CTkLabel(
+                    content_frame,
+                    text="─" * 80,
+                    font=("Arial", 8),
+                    text_color="gray"
+                )
+                separator.pack(pady=5)
+
+        # Close button
+        close_btn = ctk.CTkButton(
+            popup,
+            text="Fermer",
+            command=popup.destroy,
+            width=120,
+            height=35
+        )
+        close_btn.pack(pady=10)
+
+        popup.focus()
+
+    def show_context_popup(self, context):
+        """Show context in a popup"""
+        popup = ctk.CTkToplevel(self.root)
+        popup.title("Contexte Envoyé")
+        popup.geometry("700x500")
+
+        title_label = ctk.CTkLabel(
+            popup,
+            text="📄 Contexte Envoyé au LLM",
+            font=("Arial", 16, "bold")
+        )
+        title_label.pack(pady=10)
+
+        context_text = ctk.CTkTextbox(
+            popup,
+            wrap="word",
+            font=("Courier", 10)
+        )
+        context_text.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+        context_text.insert("1.0", context if context else "Aucun contexte")
+        context_text.configure(state="disabled")
+
+        close_btn = ctk.CTkButton(
+            popup,
+            text="Fermer",
+            command=popup.destroy,
+            width=120,
+            height=35
+        )
+        close_btn.pack(pady=10)
+
+        popup.focus()
+
+    def show_response_popup(self, response):
+        """Show full response in a popup"""
+        popup = ctk.CTkToplevel(self.root)
+        popup.title(f"Réponse - {response['model']}")
+        popup.geometry("700x500")
+
+        # Header
+        header_frame = ctk.CTkFrame(popup)
+        header_frame.pack(fill="x", padx=10, pady=10)
+
+        title_label = ctk.CTkLabel(
+            header_frame,
+            text=f"🤖 {response['model']}",
+            font=("Arial", 16, "bold")
+        )
+        title_label.pack(side="left", padx=10)
+
+        if response.get("answer_letter"):
+            answer_label = ctk.CTkLabel(
+                header_frame,
+                text=f"Réponse: {response['answer_letter']}",
+                font=("Arial", 18, "bold"),
+                text_color="green" if not response.get("error") else "red"
+            )
+            answer_label.pack(side="right", padx=10)
+
+        # Content
+        content_frame = ctk.CTkFrame(popup)
+        content_frame.pack(fill="both", expand=True, padx=10, pady=(0, 10))
+
+        if response.get("error"):
+            error_label = ctk.CTkLabel(
+                content_frame,
+                text="❌ Erreur",
+                font=("Arial", 14, "bold"),
+                text_color="red"
+            )
+            error_label.pack(pady=10)
+
+            error_text = ctk.CTkTextbox(
+                content_frame,
+                wrap="word",
+                font=("Arial", 11)
+            )
+            error_text.pack(fill="both", expand=True, padx=10, pady=10)
+            error_text.insert("1.0", response["error"])
+            error_text.configure(state="disabled")
+        else:
+            response_text = ctk.CTkTextbox(
+                content_frame,
+                wrap="word",
+                font=("Arial", 11)
+            )
+            response_text.pack(fill="both", expand=True, padx=10, pady=10)
+            response_text.insert("1.0", response.get("content", "Aucune réponse"))
+            response_text.configure(state="disabled")
+
+        close_btn = ctk.CTkButton(
+            popup,
+            text="Fermer",
+            command=popup.destroy,
+            width=120,
+            height=35
+        )
+        close_btn.pack(pady=10)
+
         popup.focus()
 
     def setup_pdf_tab(self):
@@ -1015,6 +1467,27 @@ class AILMApp:
                         }
                     )
 
+                    # Store response for history
+                    if hasattr(self, 'current_message_data'):
+                        self.current_message_data["responses"][response["model"]] = {
+                            "model": response["model"],
+                            "content": response["content"],
+                            "answer_letter": answer_letter,
+                            "error": None
+                        }
+
+                        # Check if all responses received
+                        if len(self.current_message_data["responses"]) == self.current_message_data["expected_count"]:
+                            # Save message to history
+                            self.save_current_message(
+                                self.current_message_data["user_message"],
+                                self.current_message_data["context"],
+                                list(self.current_message_data["responses"].values()),
+                                dict(self.answer_counts)
+                            )
+                            # Update history list
+                            self.update_history_list()
+
                     # Add response to chat
                     self.add_llm_response_to_chat(
                         response["model"],
@@ -1032,6 +1505,27 @@ class AILMApp:
                             "answer_letter": "?"
                         }
                     )
+
+                    # Store error for history
+                    if hasattr(self, 'current_message_data'):
+                        self.current_message_data["responses"][response["model"]] = {
+                            "model": response["model"],
+                            "content": "",
+                            "answer_letter": "?",
+                            "error": response["error"]
+                        }
+
+                        # Check if all responses received (including errors)
+                        if len(self.current_message_data["responses"]) == self.current_message_data["expected_count"]:
+                            # Save message to history
+                            self.save_current_message(
+                                self.current_message_data["user_message"],
+                                self.current_message_data["context"],
+                                list(self.current_message_data["responses"].values()),
+                                dict(self.answer_counts)
+                            )
+                            # Update history list
+                            self.update_history_list()
 
                     # Add error to chat
                     self.add_message_to_chat(
@@ -1196,6 +1690,14 @@ class AILMApp:
 
         # Reset histogram for new question
         self.reset_histogram()
+
+        # Prepare to collect responses for this message
+        self.current_message_data = {
+            "user_message": message,
+            "context": context,
+            "responses": {},
+            "expected_count": len(enabled_models)
+        }
 
         # Reset LLM statuses to idle
         for model_name in enabled_models:

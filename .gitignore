@@ -7,6 +7,9 @@ pdf_knowledge_base.json
 # RAG embeddings
 rag_embeddings.json
 
+# Conversations history
+conversations_history.json
+
 # Python cache
 __pycache__/
 *.py[cod]
