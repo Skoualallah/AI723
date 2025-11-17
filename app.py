@@ -7,6 +7,7 @@ import threading
 from queue import Queue
 import uuid
 from pdf_handler import PDFHandler
+from file_handler import FileHandler
 from openrouter_client import OpenRouterClient
 from rag_handler import RAGHandler
 
@@ -21,6 +22,7 @@ class AILMApp:
 
         # Initialize handlers
         self.pdf_handler = PDFHandler()
+        self.file_handler = FileHandler()
         self.openrouter_client = OpenRouterClient()
         self.rag_handler = RAGHandler()
 
@@ -1199,21 +1201,30 @@ class AILMApp:
         # Upload button
         upload_btn = ctk.CTkButton(
             self.tab_pdf,
-            text="Ajouter un PDF",
-            command=self.upload_pdf,
+            text="📁 Ajouter un Fichier",
+            command=self.upload_document,
             width=200,
             height=40
         )
         upload_btn.pack(pady=10)
 
-        # PDF list frame
+        # Supported formats info
+        formats_label = ctk.CTkLabel(
+            self.tab_pdf,
+            text="Formats supportés: TXT, MD, PDF, Python, JavaScript, JSON, CSV, XML, HTML, CSS, et plus...",
+            font=("Arial", 10),
+            text_color="gray"
+        )
+        formats_label.pack(pady=(0, 5))
+
+        # Document list frame
         list_frame = ctk.CTkFrame(self.tab_pdf)
         list_frame.pack(fill="both", expand=True, padx=10, pady=10)
 
         # List label
         list_label = ctk.CTkLabel(
             list_frame,
-            text="PDFs dans la base de connaissances:",
+            text="Documents dans la base de connaissances:",
             font=("Arial", 14, "bold")
         )
         list_label.pack(pady=5)
@@ -2202,8 +2213,103 @@ class AILMApp:
         except Exception as e:
             messagebox.showerror("Erreur", f"Erreur lors du traitement du PDF:\n{str(e)}")
 
+    def upload_document(self):
+        """Upload and process a document file (supports multiple formats)"""
+        # Get supported file types from FileHandler
+        filetypes = self.file_handler.get_filetypes_for_dialog()
+        # Add PDF support
+        filetypes.insert(1, ("PDF", "*.pdf"))
+
+        file_path = filedialog.askopenfilename(
+            title="Sélectionner un fichier",
+            filetypes=filetypes
+        )
+
+        if not file_path:
+            return
+
+        try:
+            filename = os.path.basename(file_path)
+            ext = os.path.splitext(filename)[1].lower()
+
+            # Determine if it's a PDF or other file type
+            if ext == '.pdf':
+                # Use PDF handler for PDFs
+                text = self.pdf_handler.extract_text(file_path)
+                file_type_info = {
+                    'type': 'pdf',
+                    'emoji': '📕',
+                    'name': 'PDF',
+                    'extension': '.pdf'
+                }
+            else:
+                # Use file handler for other types
+                file_type_info = self.file_handler.get_file_type(filename)
+                if not file_type_info:
+                    messagebox.showerror("Erreur", f"Type de fichier non supporté: {ext}")
+                    return
+                text = self.file_handler.extract_text(file_path)
+
+            if not text.strip():
+                messagebox.showwarning("Avertissement", "Le fichier semble vide ou le texte n'a pas pu être extrait.")
+                return
+
+            # Check if already exists
+            for doc in self.pdf_knowledge:
+                if doc['filename'] == filename:
+                    if not messagebox.askyesno("Confirmation", f"{filename} existe déjà. Voulez-vous le remplacer?"):
+                        return
+                    self.pdf_knowledge.remove(doc)
+                    # Remove from RAG if exists
+                    self.rag_handler.remove_pdf(filename)
+                    break
+
+            # Add to knowledge base with file type info
+            self.pdf_knowledge.append({
+                "filename": filename,
+                "content": text,
+                "added_date": datetime.now().isoformat(),
+                "file_type": file_type_info
+            })
+
+            # Save to file
+            self.save_pdf_knowledge()
+
+            # Process for RAG if enabled
+            if self.config.get("use_rag", False):
+                try:
+                    chunk_size = self.config.get("rag_chunk_size", 500)
+                    chunk_overlap = self.config.get("rag_chunk_overlap", 50)
+                    chunks_count = self.rag_handler.process_pdf(
+                        filename,
+                        text,
+                        chunk_size=chunk_size,
+                        overlap=chunk_overlap
+                    )
+                    self.rag_handler.save_embeddings()
+                    self.update_rag_info()
+                    messagebox.showinfo(
+                        "Succès",
+                        f"{file_type_info['emoji']} {filename} a été ajouté à la base de connaissances!\n\n"
+                        f"{chunks_count} chunks créés pour la recherche sémantique."
+                    )
+                except Exception as e:
+                    messagebox.showwarning(
+                        "Avertissement",
+                        f"{file_type_info['emoji']} {filename} a été ajouté mais l'indexation RAG a échoué:\n{str(e)}\n\n"
+                        "Le document sera disponible en mode traditionnel."
+                    )
+            else:
+                messagebox.showinfo("Succès", f"{file_type_info['emoji']} {filename} a été ajouté à la base de connaissances!")
+
+            # Update display
+            self.update_pdf_list()
+
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Erreur lors du traitement du fichier:\n{str(e)}")
+
     def update_pdf_list(self):
-        """Update the PDF list display"""
+        """Update the document list display"""
         # Clear current list
         for widget in self.pdf_list_frame.winfo_children():
             widget.destroy()
@@ -2211,23 +2317,32 @@ class AILMApp:
         if not self.pdf_knowledge:
             label = ctk.CTkLabel(
                 self.pdf_list_frame,
-                text="Aucun PDF dans la base de connaissances",
+                text="Aucun document dans la base de connaissances",
                 text_color="gray"
             )
             label.pack(pady=10)
             return
 
-        # Add each PDF
-        for i, pdf in enumerate(self.pdf_knowledge):
-            pdf_frame = ctk.CTkFrame(self.pdf_list_frame)
-            pdf_frame.pack(fill="x", padx=5, pady=5)
+        # Add each document
+        for i, doc in enumerate(self.pdf_knowledge):
+            doc_frame = ctk.CTkFrame(self.pdf_list_frame)
+            doc_frame.pack(fill="x", padx=5, pady=5)
 
-            # PDF info
+            # Get file type info (for backward compatibility with old PDFs)
+            if 'file_type' in doc and doc['file_type']:
+                file_emoji = doc['file_type']['emoji']
+                file_type_name = doc['file_type']['name']
+            else:
+                # Default for old PDFs without file_type info
+                file_emoji = "📕"
+                file_type_name = "PDF"
+
+            # Document info
             info_label = ctk.CTkLabel(
-                pdf_frame,
-                text=f"📄 {pdf['filename']}\n"
-                     f"Ajouté: {pdf['added_date'][:10]}\n"
-                     f"Taille: {len(pdf['content'])} caractères",
+                doc_frame,
+                text=f"{file_emoji} {doc['filename']} ({file_type_name})\n"
+                     f"Ajouté: {doc['added_date'][:10]}\n"
+                     f"Taille: {len(doc['content'])} caractères",
                 anchor="w",
                 justify="left"
             )
@@ -2235,7 +2350,7 @@ class AILMApp:
 
             # Remove button
             remove_btn = ctk.CTkButton(
-                pdf_frame,
+                doc_frame,
                 text="Supprimer",
                 command=lambda idx=i: self.remove_pdf(idx),
                 width=100,
