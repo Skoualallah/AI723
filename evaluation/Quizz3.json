@@ -1,0 +1,244 @@
+{
+  "qcm": [
+    {
+      "id": 1,
+      "question": "Ginny gère un grand projet qui implique d'énormes ressources et une grande main-d'œuvre de transition. Elle a planifié les imprévus en matière d'échéancier, de ressources et de coûts. Au fur et à mesure de l'avancement du projet. Laquelle des propositions suivantes recommanderiez-vous en ce qui concerne la gestion de l'intégration, en plus de tout ce qu'elle a prévu ?",
+      "choices": {
+        "a": "Attribuer des chefs de projet pour gérer les problèmes de travail et de main-d'œuvre aux niveaux inférieurs de l'organisation du projet.",
+        "b": "Créer et tenir à jour un journal des problèmes pour répondre aux préoccupations de la main-d'œuvre.",
+        "c": "Capturer et gérer les connaissances pour éviter la perte des connaissances acquises au cours du projet.",
+        "d": "Organiser des réunions quotidiennes pour examiner l'avancement du projet."
+      },
+      "correct": "c",
+      "justification": "Avec une main-d'œuvre de transition, il faut capter et gérer les connaissances pour éviter leur perte."
+    },
+    {
+      "id": 2,
+      "question": "Le coordinateur de projet est chargé d'envoyer des rapports hebdomadaires sur les coûts du projet à la haute direction. Étant nouveau dans l'équipe du projet, il vous demande conseil. Lequel des énoncés suivants décrit le mieux votre conseil ?",
+      "choices": {
+        "a": "Consulter les enregistrements historiques du projet lors de la création du rapport.",
+        "b": "Aucun conseil requis, car il s'agit d'une tâche simple.",
+        "c": "La haute direction ne regarde pas le rapport minutieusement.",
+        "d": "Se référer aux actifs de processus organisationnels du projet."
+      },
+      "correct": "d",
+      "justification": "Les référentiels et procédures font partie des actifs de processus organisationnels ; il doit s’y référer."
+    },
+    {
+      "id": 3,
+      "question": "Jeffrey est nouveau dans l'entreprise et est impatient de diriger le prochain projet. Comme vous êtes son aîné, il vous demande conseil dans sa façon de communiquer pour ne pas affaiblir sa crédibilité. Lequel des énoncés suivants décrit le mieux les conseils que vous lui donnez ?",
+      "choices": {
+        "a": "Aucune de ces réponses.",
+        "b": "Contrôler le flux des mots et des idées.",
+        "c": "Utilisez une expression concise et éliminez les mots en excès.",
+        "d": "Utiliser une grammaire et une orthographe correctes."
+      },
+      "correct": "d",
+      "justification": "Une grammaire et une orthographe correctes soutiennent la crédibilité du communicateur."
+    },
+    {
+      "id": 4,
+      "question": "Lequel des éléments suivants est le principal avantage du processus d'identification des risques ?",
+      "choices": {
+        "a": "Les risques de projets individuels existants sont documentés.",
+        "b": "Les risques de projet individuels existants et les sources de risque global du projet sont documentés.",
+        "c": "Il documente les réponses aux risques.",
+        "d": "Les sources de risque global du projet sont documentées."
+      },
+      "correct": "b",
+      "justification": "Il documente à la fois les risques individuels identifiés et les sources de risque global du projet."
+    },
+    {
+      "id": 5,
+      "question": "Pendant l'exécution, tous les éléments suivants sont des utilisations du rapport sur les risques, à l'exception de...",
+      "choices": {
+        "a": "Indique les facteurs les plus importants de l'exposition globale au risque du projet.",
+        "b": "Fournis des détails sur les risques de projet individuels identifiés.",
+        "c": "Résume les informations sur les risques de projet individuels identifiés.",
+        "d": "Tout ce qui précède."
+      },
+      "correct": "b",
+      "justification": "Le rapport sur les risques synthétise les informations et l’exposition globale ; il ne donne pas le détail exhaustif par risque."
+    },
+    {
+      "id": 6,
+      "question": "En tant que chef de projet, vous souhaitez tirer le meilleur parti de la communication non officielle sur le projet. Lequel des scénarios suivants décrit le mieux l'utilisation de la communication non officielle ?",
+      "choices": {
+        "a": "Établir et maintenir le profil et la reconnaissance du projet parmi les parties prenantes ne faisant pas partie du projet.",
+        "b": "Établir et maintenir le profil et la reconnaissance du projet et établir des relations solides entre l'équipe de projet et le gouvernement.",
+        "c": "Établir et maintenir le profil et la reconnaissance du projet et établir des relations solides entre l'équipe de projet et la communauté locale.",
+        "d": "Établir et maintenir le profil et la reconnaissance du projet et établir des relations solides entre l'équipe de projet et ses parties prenantes."
+      },
+      "correct": "d",
+      "justification": "La communication informelle vise profil/visibilité du projet et relations avec les parties prenantes."
+    },
+    {
+      "id": 7,
+      "question": "Dans un environnement qui contient du bruit et d'autres obstacles à la communication, lequel des énoncés suivants décrit le mieux la responsabilité du récepteur lors de la communication avec l'expéditeur ?",
+      "choices": {
+        "a": "Confirmez que l'information est correctement interprétée et reconnue ou répondue.",
+        "b": "Confirmez que le message est correctement interprété, et reconnu ou répondu.",
+        "c": "Confirmez que l'information est reçue dans son intégralité, correctement interprétée et reconnue ou répondue.",
+        "d": "Confirmer que l'information est reçue dans son intégralité et interprétée correctement."
+      },
+      "correct": "c",
+      "justification": "Le récepteur doit s’assurer que l’info est reçue en entier, interprétée correctement et reconnue/répondue."
+    },
+    {
+      "id": 8,
+      "question": "En tant que chef de projet, vous souhaitez utiliser une partie des fonds du projet pour gérer une situation qui présente un risque pour le projet. Parmi les propositions suivantes, à laquelle vous référeriez-vous pour obtenir des conseils sur l'utilisation des fonds du projet pour ce risque ?",
+      "choices": {
+        "a": "Plan de gestion des risques.",
+        "b": "Coût de référence et registre des risques.",
+        "c": "Budget du projet.",
+        "d": "Plan de gestion des coûts."
+      },
+      "correct": "a",
+      "justification": "Le plan de gestion des risques définit les fonds liés au risque et l’usage des réserves."
+    },
+    {
+      "id": 9,
+      "question": "La capacité du chef de projet à identifier correctement et à engager tous les __________ d'une manière appropriée peut faire la différence entre le succès et l'échec d'un projet.",
+      "choices": {
+        "a": "Membres de la haute direction intéressés.",
+        "b": "Membres des fournisseurs participants lors de l'approvisionnement.",
+        "c": "Membres de l'équipe de projet.",
+        "d": "Membres de la communauté des parties prenantes."
+      },
+      "correct": "d",
+      "justification": "Identifier et engager correctement toutes les parties prenantes est critique pour la réussite."
+    },
+    {
+      "id": 10,
+      "question": "Votre feuille de temps montre que vous passez trop de temps à suivre l'engagement des parties prenantes. Un membre du BGP vous dit de réduire. Laquelle des réponses suivantes choisiriez-vous comme réponse ?",
+      "choices": {
+        "a": "Votre projet a besoin de ce niveau d'effort dans les activités d'engagement des parties prenantes.",
+        "b": "Votre travail aide à augmenter le soutien et à minimiser la résistance des parties prenantes.",
+        "c": "Votre travail maintient l'efficience et l'efficacité des activités d'engagement des parties prenantes.",
+        "d": "Votre travail aide à concevoir un plan pour interagir efficacement avec les parties prenantes."
+      },
+      "correct": "c",
+      "justification": "Le suivi de l’engagement vise à maintenir/améliorer l’efficience et l’efficacité des activités d’engagement."
+    },
+    {
+      "id": 11,
+      "question": "Ron est coordinateur de projet. Après avoir rapporté des écarts d’échéancier, il est qualifié de « peu fiable ». Que devrait-il faire à l'avenir ?",
+      "choices": {
+        "a": "Ron doit communiquer avec tact.",
+        "b": "Amortir les informations négatives avec des informations plus positives.",
+        "c": "Continuer à communiquer des informations à la fois positives et négatives sur le projet.",
+        "d": "Déléguer la tâche de communiquer des informations à la haute direction."
+      },
+      "correct": "c",
+      "justification": "La communication doit rester complète et cohérente, positive comme négative."
+    },
+    {
+      "id": 12,
+      "question": "Tom, Léo et Kate exécutent le plan d’un projet logiciel et respectent l’échéancier. Laquelle des activités suivantes est la mieux adaptée au processus qu'ils exécutent ?",
+      "choices": {
+        "a": "Analyser et décider quoi faire avec les changements demandés.",
+        "b": "Ne mettre en œuvre que les modifications approuvées.",
+        "c": "Contrôler les performances du planning pour respecter l'échéance cible.",
+        "d": "Utiliser la décomposition pour simplifier les complexités techniques."
+      },
+      "correct": "b",
+      "justification": "Pendant l’exécution (Diriger et gérer le travail), on implémente les changements approuvés."
+    },
+    {
+      "id": 13,
+      "question": "Le chef de projet rassemble et exploite les connaissances accumulées au cours du projet pour améliorer les résultats. Quelle activité recommanderiez-vous ?",
+      "choices": {
+        "a": "Réaliser des audits qualité des livrables et de leurs fonctionnalités.",
+        "b": "Aucune de ces réponses.",
+        "c": "Affecter des membres de l'équipe à de nouvelles fonctionnalités planifiées.",
+        "d": "Analyser et comprendre les livrables existants pour améliorer le développement de fonctionnalités complémentaires."
+      },
+      "correct": "d",
+      "justification": "Analyser les livrables existants relève de la gestion des connaissances pour améliorer les résultats."
+    },
+    {
+      "id": 14,
+      "question": "Au début d'un projet, quatre personnes examinent, évaluent, approuvent, diffèrent ou rejettent les changements. Comment s'appelle ce groupe ?",
+      "choices": {
+        "a": "Le groupe de travail du projet.",
+        "b": "Le comité de contrôle des changements.",
+        "c": "Le gestionnaire et le sponsor",
+        "d": "Le groupe d'employés habilités."
+      },
+      "correct": "b",
+      "justification": "C’est le comité de contrôle des changements (Change Control Board)."
+    },
+    {
+      "id": 15,
+      "question": "Lors de l'examen de l'achèvement, Morgan remarque un écart dans des livrables jugés terminés plus tôt. Qu’est-ce qui a probablement causé ce problème ?",
+      "choices": {
+        "a": "Les critères de sortie étaient incorrects.",
+        "b": "Les processus de gestion du changement étaient inefficaces.",
+        "c": "Les critères d'acceptation étaient incorrects.",
+        "d": "L'assurance qualité a échoué à identifier les problèmes."
+      },
+      "correct": "c",
+      "justification": "Des critères d’acceptation modifiés sans contrôle des changements peuvent créer ces écarts."
+    },
+    {
+      "id": 16,
+      "question": "Le sponsor souligne une dérive de portée. Le mécanisme de contrôle des changements est correct. Quelle option résout au mieux le problème ?",
+      "choices": {
+        "a": "Mettre en place un tableau de contrôle des changements supplémentaire.",
+        "b": "Ignorer la demande pour l’instant.",
+        "c": "Configurer des versions à durée déterminée (time-boxing).",
+        "d": "Émettre une circulaire rejetant toute nouvelle demande de changement."
+      },
+      "correct": "c",
+      "justification": "Le time-boxing force la priorisation et limite le fluage de la portée."
+    },
+    {
+      "id": 17,
+      "question": "Un risque inconnu-inconnu s’est matérialisé ; son impact justifie le Contrôle de l’échéancier. Quelle action est la meilleure ?",
+      "choices": {
+        "a": "Affecter des ressources pour gérer le risque.",
+        "b": "Reconsidérer les réserves de l'échéancier nécessaires.",
+        "c": "Se référer au plan de réponse aux risques du registre et reconsidérer les réserves.",
+        "d": "Déterminer si l'échéancier du projet a changé."
+      },
+      "correct": "b",
+      "justification": "Pour un risque non prévu, on ajuste notamment les réserves d’échéancier dans le contrôle du planning."
+    },
+    {
+      "id": 18,
+      "question": "Pendant l'exécution, un décideur demande de retravailler la référence de base des coûts en consolidant de nouvelles données (estimations, réserves). Le projet a des problèmes budgétaires dus à des risques non identifiés. Quelle est la prochaine meilleure chose à faire ?",
+      "choices": {
+        "a": "Retravailler la référence des coûts avec estimations et réserves pour imprévus.",
+        "b": "Retravailler la référence des coûts avec estimations, réserves pour éventualités et réserves de gestion.",
+        "c": "Augmenter les réserves puis retravailler la référence des coûts.",
+        "d": "Rejeter la demande pour non-respect du système de contrôle des modifications."
+      },
+      "correct": "d",
+      "justification": "Toute mise à jour de référence doit d’abord passer par le contrôle intégré des changements."
+    },
+    {
+      "id": 19,
+      "question": "Le projet de Jason subit retouches accrues, attrition, et de nombreux risques post-implémentation. Par où commenceriez-vous ?",
+      "choices": {
+        "a": "Identifier les problèmes de projet rencontrés par l'équipe de projet et d'exploitation.",
+        "b": "S'attaquer à un problème à la fois en commençant par le plus grave.",
+        "c": "Effectuer une analyse des causes profondes.",
+        "d": "Développer un diagramme en arête de poisson."
+      },
+      "correct": "a",
+      "justification": "On commence par recenser tous les problèmes ; la priorisation et l’analyse causale suivent."
+    },
+    {
+      "id": 20,
+      "question": "Lors d'une réunion avec le propriétaire de l’entreprise, on vous demande d’expliquer l’essence de la gestion de projet et ses bénéfices. Lequel des éléments suivants omettrez-vous ?",
+      "choices": {
+        "a": "Identifier plus de risques pour le projet.",
+        "b": "Mieux gérer les changements.",
+        "c": "Résoudre les problèmes et trouver les solutions.",
+        "d": "Équilibre la portée avec le calendrier et le coût."
+      },
+      "correct": "a",
+      "justification": "La GP ne vise pas à ‘identifier plus’ de risques, mais à identifier les risques pertinents et les gérer efficacement."
+    }
+  ]
+}

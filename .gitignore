@@ -1,6 +1,8 @@
 # Configuration files (contains API keys)
 config.json
 
+TODO.txt
+
 # PDF knowledge base data
 pdf_knowledge_base.json
 
