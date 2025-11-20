@@ -9,6 +9,7 @@ import uuid
 from pdf_handler import PDFHandler
 from file_handler import FileHandler
 from openrouter_client import OpenRouterClient
+from ocr_handler import OCRHandler
 from google_client import GoogleClient
 from rag_handler import RAGHandler
 from json_utils import extract_json_from_text, extract_answer_letter_from_json
@@ -26,6 +27,7 @@ class AILMApp:
         self.pdf_handler = PDFHandler()
         self.file_handler = FileHandler()
         self.openrouter_client = OpenRouterClient()
+        self.ocr_handler = OCRHandler()
         self.google_client = GoogleClient()
         self.rag_handler = RAGHandler()
 
@@ -365,6 +367,29 @@ class AILMApp:
             height=35,
             fg_color="#2B7A78"
         )
+        self.clear_button.pack(pady=(0, 5))
+
+        # OCR from file button
+        self.ocr_file_button = ctk.CTkButton(
+            button_frame,
+            text="📷 Image",
+            command=self.ocr_from_file,
+            width=100,
+            height=30,
+            fg_color="green"
+        )
+        self.ocr_file_button.pack(pady=(0, 5))
+
+        # OCR from clipboard button
+        self.ocr_clipboard_button = ctk.CTkButton(
+            button_frame,
+            text="📋 OCR",
+            command=self.ocr_from_clipboard,
+            width=100,
+            height=30,
+            fg_color="orange"
+        )
+        self.ocr_clipboard_button.pack()
         self.new_conv_button.pack()
 
         # Bind Enter key to send message
@@ -2635,6 +2660,75 @@ class AILMApp:
 
         # Clear status after 3 seconds
         self.root.after(3000, lambda: self.config_status_label.configure(text=""))
+
+    def ocr_from_file(self):
+        """Load an image file and extract text using OCR"""
+        file_path = filedialog.askopenfilename(
+            title="Sélectionner une image",
+            filetypes=[
+                ("Images", "*.png *.jpg *.jpeg *.bmp *.gif *.tiff"),
+                ("PNG", "*.png"),
+                ("JPEG", "*.jpg *.jpeg"),
+                ("Tous les fichiers", "*.*")
+            ]
+        )
+
+        if not file_path:
+            return
+
+        try:
+            # Extract text from image
+            text = self.ocr_handler.extract_text_from_image(file_path)
+
+            if not text.strip():
+                messagebox.showwarning(
+                    "Avertissement",
+                    "Aucun texte n'a pu être extrait de l'image.\n"
+                    "Assurez-vous que l'image contient du texte lisible."
+                )
+                return
+
+            # Insert text into message input
+            current_text = self.message_input.get("1.0", "end-1c")
+            if current_text.strip():
+                # Add a space before if there's already text
+                self.message_input.insert("end", " " + text)
+            else:
+                self.message_input.delete("1.0", "end")
+                self.message_input.insert("1.0", text)
+
+            messagebox.showinfo("Succès", f"Texte extrait et inséré!\n\n{len(text)} caractères extraits.")
+
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Erreur lors de l'OCR:\n{str(e)}")
+
+    def ocr_from_clipboard(self):
+        """Extract text from an image in the clipboard using OCR"""
+        try:
+            # Extract text from clipboard image
+            text = self.ocr_handler.extract_text_from_clipboard()
+
+            if not text.strip():
+                messagebox.showwarning(
+                    "Avertissement",
+                    "Aucun texte n'a pu être extrait de l'image du presse-papier.\n"
+                    "Assurez-vous que l'image contient du texte lisible."
+                )
+                return
+
+            # Insert text into message input
+            current_text = self.message_input.get("1.0", "end-1c")
+            if current_text.strip():
+                # Add a space before if there's already text
+                self.message_input.insert("end", " " + text)
+            else:
+                self.message_input.delete("1.0", "end")
+                self.message_input.insert("1.0", text)
+
+            messagebox.showinfo("Succès", f"Texte extrait et inséré!\n\n{len(text)} caractères extraits.")
+
+        except Exception as e:
+            messagebox.showerror("Erreur", f"Erreur lors de l'OCR:\n{str(e)}")
 
     def run(self):
         """Run the application"""
