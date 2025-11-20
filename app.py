@@ -367,7 +367,7 @@ class AILMApp:
             height=35,
             fg_color="#2B7A78"
         )
-        self.clear_button.pack(pady=(0, 5))
+        self.new_conv_button.pack(pady=(0, 5))
 
         # OCR from file button
         self.ocr_file_button = ctk.CTkButton(
@@ -390,7 +390,6 @@ class AILMApp:
             fg_color="orange"
         )
         self.ocr_clipboard_button.pack()
-        self.new_conv_button.pack()
 
         # Bind Enter key to send message
         self.message_input.bind("<Control-Return>", lambda e: self.send_message())
