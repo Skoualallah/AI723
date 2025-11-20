@@ -1,0 +1,244 @@
+{
+  "qcm": [
+    {
+      "id": 1,
+      "question": "Construisez des projets autour d'individus _______. Donnez-leur l'environnement et le _______ dont ils ont besoin et faites leur ________ pour faire le travail.",
+      "choices": {
+        "a": "Motivé, soutien, confiance.",
+        "b": "Habilité, soutenir, croire.",
+        "c": "Transversal, formation, confiance.",
+        "d": "Motivé, remonter le moral, croire."
+      },
+      "correct": "a",
+      "justification": "Principe agile : Construisez des projets autour d'individus motivés. Donnez-leur l'environnement et le soutien dont ils ont besoin, et faites-leur confiance pour faire le travail."
+    },
+    {
+      "id": 2,
+      "question": "Angela vient d'être nommée chef de projet et souhaite utiliser efficacement son pouvoir, son influence, ses compétences, son leadership et ses capacités politiques. Lequel des énoncés suivants décrit le mieux la voie appropriée ?",
+      "choices": {
+        "a": "Elle doit planifier le projet selon les pratiques organisationnelles.",
+        "b": "Elle doit avoir une bonne compréhension des aspects techniques de la gestion de projet.",
+        "c": "Elle doit acquérir de bons ouvriers pour le projet.",
+        "d": "Elle doit comprendre où résident la responsabilité, l'imputabilité et l'autorité au sein de l'organisation."
+      },
+      "correct": "d",
+      "justification": "Le chef de projet doit comprendre où résident la responsabilité, l'imputabilité et l'autorité, afin d'utiliser efficacement pouvoir, influence et leadership."
+    },
+    {
+      "id": 3,
+      "question": "Louise souhaite identifier les individus et les groupes qui bénéficieront de la livraison des résultats du projet. Quel processus est exécuté ?",
+      "choices": {
+        "a": "Assigner l'équipe de projet.",
+        "b": "Identifier les parties prenantes.",
+        "c": "Élaborer la charte de projet.",
+        "d": "Fermer le projet ou la phase."
+      },
+      "correct": "b",
+      "justification": "Le processus exécuté est l’identification des parties prenantes."
+    },
+    {
+      "id": 4,
+      "question": "Les enjeux des parties prenantes peuvent inclure, sans s'y limiter, une combinaison de :",
+      "choices": {
+        "a": "Connaissance.",
+        "b": "Contribution.",
+        "c": "Tout ce qui précède.",
+        "d": "Droits."
+      },
+      "correct": "c",
+      "justification": "Toutes les options représentent des enjeux possibles pour une partie prenante."
+    },
+    {
+      "id": 5,
+      "question": "Vous souhaitez obtenir plus de ressources pour votre projet et évaluez l'influence de vos collègues. Qu'avez-vous fait ?",
+      "choices": {
+        "a": "Vous créez un plan pour saper leur influence.",
+        "b": "Tout ce qui précède.",
+        "c": "Vous avez évalué leur influence ascendante.",
+        "d": "Vous avez évalué leur influence latérale."
+      },
+      "correct": "d",
+      "justification": "Évaluer l’influence des collègues est une analyse d’influence latérale."
+    },
+    {
+      "id": 6,
+      "question": "Le plan d'engagement des parties prenantes est mis à jour dans toutes les situations suivantes, sauf :",
+      "choices": {
+        "a": "Au début d'une nouvelle phase du projet.",
+        "b": "Après la définition du périmètre pour la première fois.",
+        "c": "Changements dans la structure de l'organisation ou au sein de l'industrie.",
+        "d": "L'importance de certaines parties prenantes change."
+      },
+      "correct": "b",
+      "justification": "La première définition du périmètre ne justifie pas une mise à jour (contrairement à la ligne de base)."
+    },
+    {
+      "id": 7,
+      "question": "Laquelle des affirmations est vraie concernant l'appétit pour le risque des parties prenantes lors de la planification de l'engagement ?",
+      "choices": {
+        "a": "Aucune de ces réponses.",
+        "b": "L'appétit pour le risque ne change généralement pas et doit être pris en compte.",
+        "c": "L'appétit pour le risque n'a pas d'importance.",
+        "d": "L'appétit pour le risque n'est généralement pas sous le contrôle du chef de projet et doit être pris en compte."
+      },
+      "correct": "d",
+      "justification": "L’appétit pour le risque est un facteur environnemental hors du contrôle du chef de projet et doit être compris."
+    },
+    {
+      "id": 8,
+      "question": "Le chef de projet veut comprendre les raisons du niveau actuel de soutien des parties prenantes. Quelle technique serait utile ?",
+      "choices": {
+        "a": "Analyse de la cause fondamentale.",
+        "b": "Analyse des parties prenantes.",
+        "c": "Analyse des hypothèses.",
+        "d": "Analyse des alternatives."
+      },
+      "correct": "a",
+      "justification": "L’analyse des causes fondamentales permet d’identifier les raisons derrière un comportement."
+    },
+    {
+      "id": 9,
+      "question": "Julie ne parvient pas à obtenir les rapports de son équipe à temps malgré des rappels répétés. Quelle est la meilleure solution ?",
+      "choices": {
+        "a": "Les informer des problèmes causés par leurs retards.",
+        "b": "Les menacer de licenciement.",
+        "c": "Répondre à leurs préoccupations par la communication.",
+        "d": "Se plaindre à leur responsable fonctionnel."
+      },
+      "correct": "c",
+      "justification": "Il faut d'abord comprendre et traiter leurs préoccupations via une communication efficace."
+    },
+    {
+      "id": 10,
+      "question": "Comparer besoins, allocation et utilisation des ressources génère :",
+      "choices": {
+        "a": "Aucune de ces réponses.",
+        "b": "Données de performance au travail.",
+        "c": "Informations sur le rendement au travail.",
+        "d": "Rapport de rendement au travail."
+      },
+      "correct": "c",
+      "justification": "Cette comparaison produit des informations sur le rendement au travail."
+    },
+    {
+      "id": 11,
+      "question": "Un conflit trivial éclate entre deux membres. Quelle approche devez-vous éviter ?",
+      "choices": {
+        "a": "Persuasion, négociation, compromis et résolution de conflits.",
+        "b": "Équilibrer les objectifs concurrents.",
+        "c": "Dominer avec une vision à long terme.",
+        "d": "Adopter une vision où les relations sont aussi importantes que le projet."
+      },
+      "correct": "c",
+      "justification": "La domination est à éviter dans les conflits mineurs."
+    },
+    {
+      "id": 12,
+      "question": "Joe, chef de projet, blâme son assistant pour un glissement de 10 jours. Quelle affirmation est correcte ?",
+      "choices": {
+        "a": "Joe a raison de blâmer Andy.",
+        "b": "Il aurait dû blâmer la direction.",
+        "c": "Il aurait dû surveiller l'échéancier.",
+        "d": "Il n'aurait pas dû blâmer Andy car il est ultimement responsable."
+      },
+      "correct": "d",
+      "justification": "Le chef de projet est responsable de l’intégration et du résultat du projet."
+    },
+    {
+      "id": 13,
+      "question": "Le chef de projet colocalise des membres d'équipe pour améliorer la coordination. Pourquoi ?",
+      "choices": {
+        "a": "Pour utiliser des ressources plus qualifiées, réduire les coûts, voyager moins.",
+        "b": "Pour réduire le besoin de visioconférence.",
+        "c": "Tout ce qui précède.",
+        "d": "Améliorer la capacité à travailler en équipe, la communication et le sens de la communauté."
+      },
+      "correct": "d",
+      "justification": "La colocation améliore le travail d’équipe, la communication et la cohésion."
+    },
+    {
+      "id": 14,
+      "question": "Vous voulez savoir ce qui a été budgétisé initialement pour chaque mois du projet. Que recherchez-vous ?",
+      "choices": {
+        "a": "EV",
+        "b": "AC",
+        "c": "BAC",
+        "d": "PV"
+      },
+      "correct": "d",
+      "justification": "Les valeurs mensuelles prévues correspondent à la PV (Planned Value)."
+    },
+    {
+      "id": 15,
+      "question": "Lequel n'est pas un outil ou technique du processus Acquérir une équipe de projet ?",
+      "choices": {
+        "a": "Préaffectation.",
+        "b": "Négociation.",
+        "c": "Colocation.",
+        "d": "Équipes virtuelles."
+      },
+      "correct": "c",
+      "justification": "La colocation n’est pas une technique du processus Acquérir une équipe."
+    },
+    {
+      "id": 16,
+      "question": "Le chef de projet communique avec l'équipe et ceux qui contribueront au travail. Quelle dimension de communication est concernée ?",
+      "choices": {
+        "a": "Externe.",
+        "b": "Vers le bas.",
+        "c": "Horizontal.",
+        "d": "Vers le haut."
+      },
+      "correct": "b",
+      "justification": "La communication vers le bas concerne l’équipe et les contributeurs."
+    },
+    {
+      "id": 17,
+      "question": "Qu'une équipe peut-elle accomplir en mesurant les tendances de la vitesse ?",
+      "choices": {
+        "a": "Erreurs de correction d'estimation.",
+        "b": "Gardez une trace du chemin parcouru.",
+        "c": "Tout ce qui précède.",
+        "d": "Calculez combien de temps il faudra pour terminer."
+      },
+      "correct": "c",
+      "justification": "Les trois éléments sont permis par la mesure de la vitesse."
+    },
+    {
+      "id": 18,
+      "question": "Parmi les techniques suivantes, laquelle n'est pas une technique non verbale utile en présentation ?",
+      "choices": {
+        "a": "Prépositionnement.",
+        "b": "Gestes.",
+        "c": "Ton de la voix.",
+        "d": "Mise en miroir."
+      },
+      "correct": "a",
+      "justification": "Le prépositionnement n'est pas une technique non verbale."
+    },
+    {
+      "id": 19,
+      "question": "Que faire en premier pour réduire l'impact des parties prenantes désengagées ?",
+      "choices": {
+        "a": "Identifier les parties prenantes.",
+        "b": "Mettre en œuvre les stratégies d'engagement.",
+        "c": "Surveiller l'engagement.",
+        "d": "Capturer la valeur d'un engagement efficace des parties prenantes."
+      },
+      "correct": "d",
+      "justification": "Il faut d’abord mesurer la valeur de l'engagement des parties prenantes avant d'agir."
+    },
+    {
+      "id": 20,
+      "question": "Les parties prenantes peuvent être identifiées au cours de quels groupes de processus ?",
+      "choices": {
+        "a": "Initier, planifier, exécuter, surveiller et contrôler.",
+        "b": "Suivi, contrôle et clôture.",
+        "c": "Initiation et planification.",
+        "d": "Planification, suivi et contrôle."
+      },
+      "correct": "a",
+      "justification": "Les parties prenantes peuvent être identifiées tout au long du projet."
+    }
+  ]
+}

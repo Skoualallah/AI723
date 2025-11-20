@@ -7,8 +7,92 @@ class OpenRouterClient:
 
     def __init__(self):
         self.api_url = "https://openrouter.ai/api/v1/chat/completions"
+        self.models_api_url = "https://openrouter.ai/api/v1/models"
 
-    def send_message(self, message, api_key, model, context="", chat_history=None):
+        # Cache for model information
+        self.model_info_cache = {}
+
+        # Fallback model context limits (in tokens) if API call fails
+        self.fallback_context_limits = {
+            "anthropic/claude-3.5-sonnet": 200000,
+            "anthropic/claude-3-opus": 200000,
+            "anthropic/claude-3-sonnet": 200000,
+            "anthropic/claude-3-haiku": 200000,
+            "openai/gpt-4-turbo": 128000,
+            "openai/gpt-4": 8192,
+            "openai/gpt-3.5-turbo": 16385,
+            "google/gemini-pro": 32768,
+            "google/gemini-pro-1.5": 1000000,
+            "meta-llama/llama-3.1-70b-instruct": 131072,
+            "meta-llama/llama-3.1-8b-instruct": 131072,
+        }
+
+    def get_model_info(self, model, api_key):
+        """
+        Get model information from OpenRouter API
+
+        Args:
+            model: Model name
+            api_key: OpenRouter API key
+
+        Returns:
+            Model information dictionary or None if error
+        """
+        # Check cache first
+        if model in self.model_info_cache:
+            return self.model_info_cache[model]
+
+        try:
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+            }
+
+            response = requests.get(
+                self.models_api_url,
+                headers=headers,
+                timeout=10
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                models_list = data.get('data', [])
+
+                # Find the specific model
+                for model_info in models_list:
+                    if model_info.get('id') == model:
+                        # Cache the model info
+                        self.model_info_cache[model] = model_info
+                        return model_info
+
+            return None
+
+        except Exception:
+            # If API call fails, return None and use fallback
+            return None
+
+    def get_context_limit(self, model, api_key=None):
+        """
+        Get the context limit for a specific model from OpenRouter API
+
+        Args:
+            model: Model name
+            api_key: OpenRouter API key (optional, needed for API call)
+
+        Returns:
+            Context limit in tokens
+        """
+        # Try to get from API if api_key is provided
+        if api_key:
+            model_info = self.get_model_info(model, api_key)
+            if model_info:
+                context_length = model_info.get('context_length')
+                if context_length:
+                    return context_length
+
+        # Fallback to hardcoded values
+        return self.fallback_context_limits.get(model, 8192)
+
+    def send_message(self, message, api_key, model, context="", chat_history=None, use_structured_output=False):
         """
         Send a message to OpenRouter API
 
@@ -18,9 +102,13 @@ class OpenRouterClient:
             model: Model to use (e.g., "anthropic/claude-3.5-sonnet")
             context: Additional context from PDF knowledge base
             chat_history: Previous chat history
+            use_structured_output: Whether to use structured JSON output
 
         Returns:
-            Response from the model
+            Dictionary with:
+            - content: Response from the model
+            - usage: Token usage information (prompt_tokens, completion_tokens, total_tokens)
+            - model: Model used for the response
         """
         if chat_history is None:
             chat_history = []
@@ -56,6 +144,35 @@ class OpenRouterClient:
             "messages": messages
         }
 
+        # Add structured output schema if enabled
+        if use_structured_output:
+            data["response_format"] = {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "structured_response",
+                    "strict": True,
+                    "schema": {
+                        "type": "object",
+                        "properties": {
+                            "explanation": {
+                                "type": "string",
+                                "description": "Detailed explanation of the reasoning"
+                            },
+                            "final_answer": {
+                                "type": "string",
+                                "description": "The final answer to the question"
+                            },
+                            "final_answer_letter": {
+                                "type": "string",
+                                "description": "The letter of the final answer (e.g., A, B, C, D)"
+                            }
+                        },
+                        "required": ["explanation", "final_answer", "final_answer_letter"],
+                        "additionalProperties": False
+                    }
+                }
+            }
+
         try:
             # Send request
             response = requests.post(
@@ -76,7 +193,12 @@ class OpenRouterClient:
 
             # Extract message content
             if 'choices' in response_data and len(response_data['choices']) > 0:
-                return response_data['choices'][0]['message']['content']
+                result = {
+                    'content': response_data['choices'][0]['message']['content'],
+                    'usage': response_data.get('usage', {}),
+                    'model': response_data.get('model', model)
+                }
+                return result
             else:
                 raise Exception("Réponse API invalide: pas de choix disponible")
 

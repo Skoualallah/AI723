@@ -1,0 +1,160 @@
+{
+  "qcm": [
+    {
+      "id": 1,
+      "question": "Votre entreprise vient d'assister à une restructuration dans l'une de ses divisions. Cela a entraîné des changements dans les structures de l'équipe de projet et de l'équipe de gouvernance. Lequel des énoncés suivants décrit quelque chose que vous devriez faire pour vous assurer du soutien au projet ?",
+      "choices": {
+        "a": "Identifier et prioriser les parties prenantes.",
+        "b": "Identifier et prioriser les risques.",
+        "c": "Surveiller les niveaux d'engagement de l'équipe de projet.",
+        "d": "Continuer à travailler sur le projet."
+      },
+      "correct": "a",
+      "justification": "Puisqu'il y a eu un changement dans la communauté des parties prenantes, il est préférable d'identifier et de hiérarchiser les parties prenantes et leurs besoins d'engagement pour maintenir un soutien optimal."
+    },
+    {
+      "id": 2,
+      "question": "Qui parmi les choix suivants n'est PAS susceptible d'initier un projet ?",
+      "choices": {
+        "a": "Chef de projet.",
+        "b": "Porteur du Projet.",
+        "c": "Bureau de gestion de programme ou de projet (BGP).",
+        "d": "Président de l'organe directeur du portefeuille."
+      },
+      "correct": "a",
+      "justification": "Les projets sont initiés par une entité externe au projet : porteur de projet, programme, BGP ou présidence du portefeuille. Le chef de projet n'initie pas un projet."
+    },
+    {
+      "id": 3,
+      "question": "Lequel des énoncés suivants décrit le mieux l'utilisation du guide PMBOK(R) et ses processus ?",
+      "choices": {
+        "a": "Servir d'approche unique de la gestion de projet.",
+        "b": "Fournir des exemples de processus, d'entrées, d'outils, de techniques, de sorties et de phases du cycle de vie qui peuvent être utilisés selon les besoins.",
+        "c": "Obliger l'utilisation d'une méthodologie standardisée.",
+        "d": "Tout ce qui précède."
+      },
+      "correct": "b",
+      "justification": "Le PMBOK fournit des exemples et des bonnes pratiques adaptés selon le projet. Il n'impose pas de méthodologie."
+    },
+    {
+      "id": 4,
+      "question": "On vous a demandé de diriger un projet qui subit des changements fréquents entraînant une congestion du mécanisme de contrôle des changements. Quelle solution est la meilleure ?",
+      "choices": {
+        "a": "Réduire la taille du tableau de contrôle des changements.",
+        "b": "Permettre à l'équipe de contourner le système de contrôle des changements.",
+        "c": "Rejeter les demandes de changement lentes à examiner.",
+        "d": "Permettre à l'équipe d'être collaborative et auto-organisée."
+      },
+      "correct": "d",
+      "justification": "Des équipes collaboratives et auto-organisées réagissent mieux dans un contexte de variabilité élevée et réduisent la congestion décisionnelle."
+    },
+    {
+      "id": 5,
+      "question": "Après une réunion initiale, le porteur du projet demande à Jacob de démarrer le projet. Que doit-il faire ?",
+      "choices": {
+        "a": "Identifier les parties prenantes puis rassembler les exigences.",
+        "b": "Refuser tant que la charte du projet n'est pas rédigée et signée.",
+        "c": "Refuser tant que le plan de gestion des avantages n'est pas signé.",
+        "d": "Ne procéder que lorsque les hypothèses et contraintes sont définies."
+      },
+      "correct": "b",
+      "justification": "Le projet ne doit commencer qu'une fois la charte du projet officialisée."
+    },
+    {
+      "id": 6,
+      "question": "Deux membres travaillent sur le même lot de travaux alors que ce n'était pas prévu. Quelle solution est appropriée ?",
+      "choices": {
+        "a": "Examiner la base de référence de la portée.",
+        "b": "Examiner et mettre à jour le tableau RACI.",
+        "c": "Revoir la charte d'équipe.",
+        "d": "Mettre à jour le plan de gestion des parties prenantes."
+      },
+      "correct": "b",
+      "justification": "Le problème est lié aux affectations : c'est le tableau RACI qui définit qui fait quoi."
+    },
+    {
+      "id": 7,
+      "question": "Quel est le rôle idéal du chef de projet ?",
+      "choices": {
+        "a": "Être compétent dans tous les rôles et les remplir au besoin.",
+        "b": "Ne pas remplir tous les rôles mais posséder compétences et expérience.",
+        "c": "Être compétent dans tous les rôles et en jouer au moins un.",
+        "d": "Toutes ces réponses."
+      },
+      "correct": "b",
+      "justification": "Le chef de projet n'est pas censé remplir tous les rôles mais doit posséder les compétences nécessaires et fournir leadership et coordination."
+    },
+    {
+      "id": 8,
+      "question": "Pour élaborer un plan de gestion des coûts, vous consultez les ressources financières pré-approuvées. Quel document utilisez-vous ?",
+      "choices": {
+        "a": "Plan de gestion de projet.",
+        "b": "Plan de gestion des ressources.",
+        "c": "Charte de projet.",
+        "d": "Plan d'affaires."
+      },
+      "correct": "c",
+      "justification": "La charte du projet contient les ressources financières pré-approuvées."
+    },
+    {
+      "id": 9,
+      "question": "Jim définit la base des travaux du projet. Quel document est le plus utile ?",
+      "choices": {
+        "a": "Document autorisant formellement le projet et donnant pouvoir au chef de projet.",
+        "b": "Phases du cycle de vie du produit.",
+        "c": "Étude de faisabilité économique.",
+        "d": "Plan de gestion des avantages."
+      },
+      "correct": "a",
+      "justification": "Il s'agit de la charte de projet, seule entrée essentielle pour élaborer le plan de gestion de projet."
+    },
+    {
+      "id": 10,
+      "question": "Vous avez réuni toute l'équipe pour lancer le projet. Quel processus avez-vous effectué ?",
+      "choices": {
+        "a": "Diriger et gérer le travail du projet.",
+        "b": "Gérer l'engagement des parties prenantes.",
+        "c": "Planifier l'engagement des parties prenantes.",
+        "d": "Élaborer la charte de projet."
+      },
+      "correct": "b",
+      "justification": "La réunion de lancement fait partie du processus de gestion de l'engagement des parties prenantes."
+    },
+    {
+      "id": 11,
+      "question": "Quelle option permet une vue en temps réel du projet et facilite le transfert de connaissances ?",
+      "choices": {
+        "a": "Utiliser des outils de gestion visuelle.",
+        "b": "Installer des caméras de vidéosurveillance.",
+        "c": "Documenter les éléments critiques dans des documents écrits.",
+        "d": "Tenir de nombreuses réunions."
+      },
+      "correct": "a",
+      "justification": "La gestion visuelle rend les éléments clés visibles en temps réel et favorise la résolution rapide des problèmes."
+    },
+    {
+      "id": 12,
+      "question": "Comment est créée la charte d'équipe ?",
+      "choices": {
+        "a": "Par le chef de projet et le porteur de projet.",
+        "b": "Par le porteur de projet et la direction.",
+        "c": "Par le chef de projet, le porteur de projet et quelques ressources clés.",
+        "d": "Par le chef de projet et l'équipe de projet."
+      },
+      "correct": "d",
+      "justification": "La charte d'équipe fonctionne mieux lorsqu'elle est développée et mise à jour par l'ensemble de l'équipe."
+    },
+    {
+      "id": 13,
+      "question": "Pourquoi utilise-t-on le calendrier des ressources ?",
+      "choices": {
+        "a": "Pour décrire la durée entre le début et la fin d'une activité.",
+        "b": "Pour identifier les jours ouvrables et quarts de travail disponibles.",
+        "c": "Pour identifier les jours et quarts de travail où chaque ressource spécifique est disponible.",
+        "d": "Pour décrire comment les ressources sont acquises et contrôlées."
+      },
+      "correct": "c",
+      "justification": "Le calendrier des ressources précise la disponibilité de chaque ressource : jours, quarts, horaires, week-ends et jours fériés."
+    }
+  ]
+}

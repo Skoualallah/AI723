@@ -1,0 +1,220 @@
+{
+  "qcm": [
+    {
+      "id": 1,
+      "question": "Dans un effort pour mettre en place des équipes agiles dans l'organisation et dans votre projet, la haute direction vous demande de commencer à mettre en place une équipe auto-organisée. Laquelle des actions suivantes est la meilleure chose à faire en premier ?",
+      "choices": {
+        "a": "Développer l'intelligence émotionnelle de l'équipe.",
+        "b": "Intégrer un généraliste expert (ou désigner vous-même) pour créer l'environnement et le soutien nécessaires à l'équipe.",
+        "c": "Créer un plan pour permettre l'approvisionnement juste à temps en utilisant la théorie des contraintes.",
+        "d": "Utiliser des équipes distribuées."
+      },
+      "correct": "b",
+      "justification": "En agile, une équipe auto-organisée réussit mieux avec un ‘généraliste expert’ (Scrum Master) qui met en place l’environnement et le soutien adéquats."
+    },
+    {
+      "id": 2,
+      "question": "L'examen des activités sans valeur ajoutée fait partie de :",
+      "choices": {
+        "a": "Audits qualité.",
+        "b": "Analyse des processus.",
+        "c": "Contrôle de la qualité.",
+        "d": "Planification de  la gestion de la qualité."
+      },
+      "correct": "b",
+      "justification": "L’analyse des processus vise à identifier les opportunités d’amélioration, les contraintes et les activités sans valeur ajoutée."
+    },
+    {
+      "id": 3,
+      "question": "Les histoires des utilisateurs contiennent suffisamment de critères pour servir de rappel à l'équipe. Comment les programmeurs s'assurent-ils que le besoin est satisfait ?",
+      "choices": {
+        "a": "Discutez avec les utilisateurs, notez les cas de test d'acceptation derrière la carte et les exécuter.",
+        "b": "Il y a toujours plus de chances, donc l'équipe peut faire des hypothèses, en faire la démonstration et intégrer les commentaires plus tard..",
+        "c": "Les développeurs s'attendent à ce que le propriétaire du produit maintienne une liste de contrôle séparément.",
+        "d": "Étant donné que les user stories ne sont pas suffisantes, les développeurs doivent ajouter une documentation complète en coulisses."
+      },
+      "correct": "a",
+      "justification": "Les critères/tests d’acceptation accompagnent les user stories et sont exécutés pour vérifier que le besoin est satisfait."
+    },
+    {
+      "id": 4,
+      "question": "Le propriétaire du produit réorganise les priorités et ajoute des épopées et des fonctionnalités supplémentaires au backlog, tout en éliminant certaines qui ne sont plus nécessaires. Le travail qu'elle exerce est appelé ?",
+      "choices": {
+        "a": "Nettoyage de l'arriérage.",
+        "b": "Création de feuille de route produit.",
+        "c": "Création de charte de projet.",
+        "d": "Revue de L'arriérage."
+      },
+      "correct": "a",
+      "justification": "Il s’agit du ‘nettoyage’ (refinement) du backlog : ordonnancement et ajustements selon la priorité et d’autres critères."
+    },
+    {
+      "id": 5,
+      "question": "Une équipe agile en est encore à ses balbutiements et veut déterminer la durée d’une itération. Quel élément est le plus essentiel pour prendre cette décision ?",
+      "choices": {
+        "a": "Estimez le récit le plus long, traduisez les points d'étage en jours-homme, puis sélectionnez une taille d'itération pour gérer cela.",
+        "b": "Rechercher les données de  projets et d'équipes précédentes.",
+        "c": "Déterminez combien de temps les parties prenantes du projet peuvent passer sans afficher les progrès ou fournir des commentaires.",
+        "d": "Suivez les instructions du Scrum Master, car il est le membre le plus expérimenté de l'équipe."
+      },
+      "correct": "c",
+      "justification": "La durée du sprint doit permettre des démonstrations fréquentes et du feedback régulier des parties prenantes."
+    },
+    {
+      "id": 6,
+      "question": "Noah met en place un environnement adaptatif pour son projet. Parmi les éléments suivants, lesquels ne présentent pas d'avantages liés à la mise en œuvre d'un environnement adaptatif lors de la gestion de l'intégration du projet ?",
+      "choices": {
+        "a": "Les approches adaptatives encouragent la prise de décision collaborative.",
+        "b": "Les approches adaptatives améliorent la capacité de l'équipe de projet à faire face aux changements.",
+        "c": "Les approches adaptatives contrôlent la planification et la livraison détaillées des produits attribuées à l'équipe.",
+        "d": "Les approches adaptatives encouragent l'engagement des membres de l'équipe en tant qu'experts locaux du domaine."
+      },
+      "correct": "c",
+      "justification": "En adaptatif, la planification détaillée du produit relève du Product Owner, pas d’un ‘contrôle’ imposé à l’équipe."
+    },
+    {
+      "id": 7,
+      "question": "Lors d’une réunion d’itération, le sponsor souhaite découvrir plus tôt les incohérences et problèmes de qualité, quand les coûts de changement sont plus faibles. Quelle solution y conduit ?",
+      "choices": {
+        "a": "Augmenter le temps consacré aux activités de contrôle qualité.",
+        "b": "Employer plusieurs consultants qualité pour améliorer la qualité des processus.",
+        "c": "Livrer de petits lots de travail.",
+        "d": "Utiliser les sept outils de qualité."
+      },
+      "correct": "c",
+      "justification": "Les petits lots favorisent des livraisons fréquentes et révèlent plus tôt les problèmes de qualité."
+    },
+    {
+      "id": 8,
+      "question": "Le Propriétaire du produit a terminé sa première tentative d’arriérage de produit. Laquelle des actions suivantes est la meilleure chose à faire ?",
+      "choices": {
+        "a": "Identifier l'incrément commercial minimum.",
+        "b": "Planifier la sortie de la solution à l'aide des éléments de l'arrièrage.",
+        "c": "Prioriser l'arrièrage.",
+        "d": "Assembler l'équipe."
+      },
+      "correct": "a",
+      "justification": "Identifier le MBI (Minimum Business Increment) éclaire la planification des versions et la réalisation de valeur."
+    },
+    {
+      "id": 9,
+      "question": "Plusieurs équipes Scrum travaillent sur un même produit et n’arrivent pas à s’accorder sur la ‘définition du fait’. Que doit faire le coach Agile Robert ?",
+      "choices": {
+        "a": "Laisser chaque équipe définir ‘fait’ comme elle veut et régler plus tard au sprint de durcissement.",
+        "b": "Laisser à chaque équipe une flexibilité tant qu’il existe une convergence et un terrain d’entente à l’intégration pour rendre le produit disponible.",
+        "c": "Ne pas s’en soucier : trop complexe au jour le jour.",
+        "d": "Définir ‘fait’ lui-même et former les équipes."
+      },
+      "correct": "b",
+      "justification": "Flexibilité locale mais convergence vers une compréhension commune (feuille de route/DoD partagée) au moment de l’intégration."
+    },
+    {
+      "id": 10,
+      "question": "La « Burndown Chart sprint » appartient à l'équipe Scrum. Quelle est sa signification majeure ?",
+      "choices": {
+        "a": "Base du rapport de situation hebdomadaire à la haute direction.",
+        "b": "Être affichée au mur car c’est un signe d’équipe Agile.",
+        "c": "Permettre à l'équipe de suivre son succès quotidiennement et d'ajuster au besoin.",
+        "d": "Empêcher les autres d’intervenir : qu’ils consultent le graphique plutôt que de déranger l'équipe."
+      },
+      "correct": "c",
+      "justification": "Le burndown sert d’outil visuel de suivi quotidien et d’ajustement par l’équipe."
+    },
+    {
+      "id": 11,
+      "question": "Un objectif de sprint est établi. À mi-parcours, de nouvelles tâches nécessaires apparaissent et l’équipe pense ne pas pouvoir finir à temps. Quelles devraient être les prochaines étapes ?",
+      "choices": {
+        "a": "Refonder et planifier le sprint.",
+        "b": "L’amener aux rencontres quotidiennes et l’adresser immédiatement au propriétaire du produit.",
+        "c": "Espérer le mieux et expliquer les retards à la revue.",
+        "d": "Trouver quelqu’un à blâmer."
+      },
+      "correct": "b",
+      "justification": "On ne prolonge pas le sprint ; on renégocie l’étendue avec le Product Owner via la daily et les échanges courants."
+    },
+    {
+      "id": 12,
+      "question": "Les personnes suivantes devraient s'engager activement dans la planification du sprint :",
+      "choices": {
+        "a": "Clients, analystes et développeurs, pour n'en nommer que quelques-uns.",
+        "b": "Propriétaire du produit, Gestionnaire des changements, et analystes.",
+        "c": "Toute l'équipe du projet.",
+        "d": "Sponsor, client sur site, responsables du développement et des tests."
+      },
+      "correct": "c",
+      "justification": "La planification de sprint implique l’ensemble de l’équipe projet (Scrum Team complète)."
+    },
+    {
+      "id": 13,
+      "question": "Le Product Owner et l’équipe classent les histoires en indispensables, devraient avoir, pourraient avoir, n’auront pas, et sélectionnent des indispensables pour l’itération. Quelle méthode est utilisée ?",
+      "choices": {
+        "a": "Analyse du modèle de Kano.",
+        "b": "Technique de priorisation pondérée.",
+        "c": "Technique simple de classement.",
+        "d": "Technique  MoSCoW."
+      },
+      "correct": "d",
+      "justification": "La catégorisation Must/Should/Could/Won’t correspond à la technique MoSCoW."
+    },
+    {
+      "id": 14,
+      "question": "Vélocité moyenne d’équipe = 20. Estimations (ordre de priorité) : H1=8, H2=3, H3=8, H4=5, H5=1, H6=2, H7=1. Quel choix fait l’équipe ?",
+      "choices": {
+        "a": "Choisir H6, H7, H5, H2, H4 et découper 1 et 3 pour prendre un max d’histoires.",
+        "b": "Choisir H1, H2, H3, H5 — les plus prioritaires qui s’ajoutent à la vélocité.",
+        "c": "Regrouper les histoires dépendantes et les livrer ensemble.",
+        "d": "Tout prendre et faire le maximum possible, la vélocité varie."
+      },
+      "correct": "b",
+      "justification": "On sélectionne les items prioritaires dont la somme ≈ vélocité (8+3+8+1=20)."
+    },
+    {
+      "id": 15,
+      "question": "Après une revue de sprint globalement positive mais avec quelques nouvelles fonctionnalités demandées, que doit faire l’équipe en premier ?",
+      "choices": {
+        "a": "Lancer la mise en œuvre des nouvelles fonctionnalités demandées.",
+        "b": "Mettre à jour l’arriérage et estimer les nouvelles fonctionnalités demandées.",
+        "c": "Prendre le temps de réfléchir aux processus et comment les améliorer lors de la rétrospective.",
+        "d": "Compléter les histoires laissées de côté dans le sprint."
+      },
+      "correct": "c",
+      "justification": "La rétro vise l’amélioration continue des processus à la fin de chaque sprint."
+    },
+    {
+      "id": 16,
+      "question": "Après lecture d’une story et éclaircissements, l’équipe utilise le planning poker. Les votes : 1, 3, 3, 5, 8. Prochaine meilleure action ?",
+      "choices": {
+        "a": "Aller avec 3 puisque c’est le vote majoritaire.",
+        "b": "Prendre la moyenne des 5 estimations.",
+        "c": "Prendre le pire des cas (8).",
+        "d": "Demander aux membres ayant voté 1 et 8 d’expliquer leur raisonnement."
+      },
+      "correct": "d",
+      "justification": "On explore les extrêmes pour partager la compréhension et affiner l’estimation."
+    },
+    {
+      "id": 17,
+      "question": "_______________ est une unité d'estimations et de progression pour les utilisateurs des histoires.",
+      "choices": {
+        "a": "Vitesse de l'histoire.",
+        "b": "Semaines opportunes.",
+        "c": "Comptes de contrôle.",
+        "d": "Points d'histoire."
+      },
+      "correct": "d",
+      "justification": "Les points d’histoire mesurent l’effort/complexité/risque pour estimer et suivre la progression."
+    },
+    {
+      "id": 18,
+      "question": "Vous souhaitez identifier les individus et les groupes qui bénéficieront de la livraison des résultats du projet dans l'analyse de rentabilisation. Quelle est la prochaine meilleure chose à faire ?",
+      "choices": {
+        "a": "Analyser le plan de gestion de projet.",
+        "b": "Analyser le dossier économique du projet.",
+        "c": "Analyser le plan de gestion des bénéfices.",
+        "d": "Analyser le registre des parties prenantes."
+      },
+      "correct": "c",
+      "justification": "Le plan de gestion des bénéfices précise comment réaliser les bénéfices et qui en bénéficie (donc parties prenantes)."
+    }
+  ]
+}
