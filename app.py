@@ -380,6 +380,17 @@ class AILMApp:
         )
         self.ocr_file_button.pack(pady=(0, 5))
 
+        # View context button
+        self.view_context_button = ctk.CTkButton(
+            button_frame,
+            text="📄 Contexte",
+            command=self.show_context_window,
+            width=100,
+            height=30,
+            fg_color="#5D3FD3"
+        )
+        self.view_context_button.pack(pady=(0, 5))
+
         # OCR from clipboard button
         self.ocr_clipboard_button = ctk.CTkButton(
             button_frame,
